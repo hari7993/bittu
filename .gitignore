@@ -3,6 +3,7 @@ build/
 .gradle/
 local.properties
 *.apk
+*.aar
 *.keystore
 *.jks
 keystore.properties

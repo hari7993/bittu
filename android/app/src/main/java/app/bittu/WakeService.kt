@@ -163,7 +163,10 @@ class WakeService : Service() {
                 // when the words have not changed for a moment, it acts on them. While waiting for the name this only
                 // applies once the name has been heard, so other people's talk never triggers it.
                 main.removeCallbacks(settle)
-                if (mode == Mode.COMMAND || NAME.containsMatchIn(it.lowercase())) main.postDelayed(settle, 900)
+                // 0.9 seconds was too eager: a short breath in the middle of a sentence was taken for its end, and "open WhatsApp office"
+                // became "open what office". A sentence that ends on a joining word ("to", "about", "and") is clearly not finished yet.
+                val unfinished = Regex("(^| )(to|for|about|and|on|in|at|the|a|that|saying|with|of|from|ki|ku|ko|lo)$").containsMatchIn(it.lowercase().trim())
+                if (mode == Mode.COMMAND || NAME.containsMatchIn(it.lowercase())) main.postDelayed(settle, if (unfinished) 2600 else 1600)
             } }
             override fun onResults(b: Bundle?) { if (mine == session) finished(words(b).ifEmpty { heard }, 300) }
             override fun onError(code: Int) {

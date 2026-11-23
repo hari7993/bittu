@@ -42,6 +42,30 @@ class ScreenControl : AccessibilityService() {
     /** The package of the app on screen right now. */
     fun front(): String = runCatching { rootInActiveWindow?.packageName?.toString() }.getOrNull().orEmpty()
 
+    /**
+     * Taps the item whose words sound most like what was said, when no item matches exactly. Returns the words of the
+     * item that was tapped, or null. Only a clearly close item is tapped; a wrong tap is worse than none.
+     */
+    fun tapLike(said: String, waitMs: Int): String? {
+        val until = System.currentTimeMillis() + waitMs
+        do {
+            if (tap(said, 0)) return said
+            var best: AccessibilityNodeInfo? = null; var bestScore = 0.0; var second = 0.0; var bestLabel = ""
+            walk(rootInActiveWindow) { n ->
+                val l = label(n)
+                if (l.length in 2..60 && n.isVisibleToUser) { val sc = Tools.alike(said, l); if (sc > bestScore) { second = bestScore; bestScore = sc; best = n; bestLabel = l } else if (sc > second) second = sc }
+                false
+            }
+            if (best != null && bestScore >= 0.62 && bestScore - second >= 0.08) {
+                var target = best
+                while (target != null && !target.isClickable) target = target.parent
+                if (target != null && target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return bestLabel
+            }
+            Thread.sleep(250)
+        } while (System.currentTimeMillis() < until)
+        return null
+    }
+
     fun tap(words: String, waitMs: Int): Boolean {
         val until = System.currentTimeMillis() + waitMs
         do {

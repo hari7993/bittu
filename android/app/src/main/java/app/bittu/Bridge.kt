@@ -227,6 +227,10 @@ class Bridge(private val activity: Activity, private val send: (String, String) 
         Agent.reset(); Skills.begin(c, text); val r = Agent.ask(c, text) { }; Skills.end(c, r)
         return "AI | ${System.currentTimeMillis() - t0} ms | $r" }
 
+    /** Test builds only: how alike a spoken name and a name on screen are, 0 to 1. */
+    @JavascriptInterface
+    fun testAlike(said: String, shown: String): String = if (testBuild) "%.2f".format(Tools.alike(said, shown)) else ""
+
     /** Test builds only: who a spoken name would reach. Nothing is called or sent. */
     @JavascriptInterface
     fun testWho(name: String): String = if (testBuild) Tools.who(activity.applicationContext, name) else ""

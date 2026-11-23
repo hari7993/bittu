@@ -62,7 +62,10 @@ object Tools {
                 repeat(4) { if (text.lines().count { it.isNotBlank() } < 2) { Thread.sleep(500); text = screen.read() } }
                 text.ifBlank { "Nothing readable is on screen." }
             } ?: "Screen control is switched off, so the screen cannot be read."
-            "tap_on" -> ScreenControl.instance?.let { if (it.tap(a.optString("words"), 1500)) "Tapped \"${a.optString("words")}\"." else "Nothing with the words \"${a.optString("words")}\" was found on screen." } ?: "Screen control is switched off."
+            "tap_on" -> ScreenControl.instance?.let { screen ->
+                if (screen.tap(a.optString("words"), 1500)) "Tapped \"${a.optString("words")}\"."
+                else screen.tapLike(a.optString("words"), 600)?.let { "Tapped \"$it\", the closest match on screen to \"${a.optString("words")}\"." } ?: "Nothing with the words \"${a.optString("words")}\" was found on screen."
+            } ?: "Screen control is switched off."
             "type_text" -> ScreenControl.instance?.let { if (it.type(a.optString("text"))) "Typed it." else "No text box is open on screen." } ?: "Screen control is switched off."
             "press_button" -> ScreenControl.instance?.let { if (it.press(a.optString("button"))) "Pressed ${a.optString("button")}." else "That button could not be pressed." } ?: "Screen control is switched off."
             else -> "That action does not exist."
@@ -185,11 +188,64 @@ object Tools {
     /** True when the name reaches someone in the family list, Bittu's people or the contacts. */
     fun knows(c: Context, name: String): Boolean = person(c, name) != null
 
+    /**
+     * How alike two names are when spoken, from 0 (nothing alike) to 1 (the same). Used to find "Priya Sharma Intern"
+     * on screen when the recognizer wrote "Priya sharma in turn".
+     */
+    fun alike(said: String, shown: String): Double {
+        val a = sound(said); val b = sound(shown)
+        if (a.isEmpty() || b.isEmpty()) return 0.0
+        if (a == b) return 1.0
+        val whole = 1.0 - distance2(a, b).toDouble() / maxOf(a.length, b.length)
+        // Also word by word: how many of the spoken words have a close partner on screen.
+        val sw = said.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length > 1 }.map { sound(it) }
+        val tw = shown.lowercase().split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length > 1 }.map { sound(it) }
+        val words = if (sw.isEmpty() || tw.isEmpty()) 0.0 else sw.count { w -> tw.any { t -> t == w || (w.length > 3 && (t.startsWith(w) || w.startsWith(t))) || distance(w, t) <= 1 } }.toDouble() / sw.size
+        return maxOf(whole, words * 0.9)
+    }
+
+    /** Spelling distance without the length cut-off that distance() uses for app names. */
+    private fun distance2(a: String, b: String): Int {
+        var prev = IntArray(b.length + 1) { it }
+        for (x in 1..a.length) {
+            val cur = IntArray(b.length + 1); cur[0] = x
+            for (y in 1..b.length) cur[y] = minOf(prev[y] + 1, cur[y - 1] + 1, prev[y - 1] + if (a[x - 1] == b[y - 1]) 0 else 1)
+            prev = cur
+        }
+        return prev[b.length]
+    }
+
     /** Runs a command through the helper. Null when the helper cannot be started. */
     fun shell(cmd: String): String? = if (!ready()) null else sh(cmd)
 
     /** For checking the lookup without calling or sending anything: the name found and the number's last two digits. */
     fun who(c: Context, name: String): String = person(c, name)?.let { it.first + " (number ends in " + it.second.filter(Char::isDigit).takeLast(2) + ")" } ?: ("nobody." + nearby(c, name))
+
+    /** Sends a WhatsApp message by opening the right WhatsApp, finding the chat by name (searching if needed), typing and tapping send. */
+    private fun viaChatList(c: Context, app: String, name: String, text: String): String {
+        if (!ready()) return NO_HELPER
+        val screen = ScreenControl.instance ?: return "Nobody called $name is in the contacts, and screen control is off, so the chat list cannot be searched." + nearby(c, name)
+        val business = isBusiness(app)
+        val pkg = if (business) WA_BUSINESS else WA_PERSONAL
+        val label = if (business) "WhatsApp Business" else "WhatsApp"
+        if (!installed(c, pkg)) return "$label is not installed on this phone."
+        if (screen.front() != pkg) { val main = apps(c).firstOrNull { it.second == pkg } ?: return "$label could not be opened."; sh("am start -n '${main.second}/${main.third}'"); Thread.sleep(1500) }
+        // In the chat list already? Tap the chat whose name sounds like what was said.
+        var opened = screen.tapLike(name, 2500)
+        if (opened == null) {
+            // Not on screen: use WhatsApp's own search.
+            if (screen.tap("Search", 2500) || screen.tap("Ask Meta AI or Search", 800)) { Thread.sleep(500); screen.type(name); Thread.sleep(1500); opened = screen.tapLike(name, 2500) }
+        }
+        if (opened == null) return "Nobody called $name is in the contacts, and no chat with a name like that was found in $label." + nearby(c, name)
+        Thread.sleep(900)
+        var typed = false
+        repeat(8) { if (!typed) { typed = screen.type(text); if (!typed) Thread.sleep(300) } }
+        if (!typed) return "The chat \"$opened\" is open in $label, but its message box was not found. Nothing was sent."
+        if (!screen.tap("Send", 4000)) return "The message is typed in the chat \"$opened\" in $label, but the send button was not found. The owner has to tap send."
+        Thread.sleep(600)
+        did("msg", "Sent a $label message to $opened")
+        return "Sent to $opened on $label."
+    }
 
     private fun call(c: Context, name: String): String {
         val p = person(c, name) ?: return "Nobody called $name is in the contacts." + nearby(c, name)
@@ -202,8 +258,10 @@ object Tools {
     }
 
     private fun message(c: Context, app: String, name: String, text: String): String {
-        val p = person(c, name) ?: return "Nobody called $name is in the contacts." + nearby(c, name)
         if (text.isBlank()) return "There is no message text. Ask the owner what to say."
+        // Not in the phone's contacts. On WhatsApp the person may still be in the chat list (a customer, a group, a number
+        // saved only there), so look for the chat itself before giving up.
+        val p = person(c, name) ?: return if (app.lowercase() == "sms") "Nobody called $name is in the contacts." + nearby(c, name) else viaChatList(c, app, name, text)
         if (app.lowercase() == "sms") {
             if (c.checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) return "Bittu is not allowed to send texts yet. The owner must allow SMS in the app."
             val m = c.getSystemService(SmsManager::class.java)
@@ -239,14 +297,14 @@ object Tools {
         return appList
     }
 
-    private fun squash(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
+    fun squash(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
 
     /** How a word sounds, roughly, so "phone pay" and "PhonePe" or "watsap" and "WhatsApp" meet. */
-    private fun sound(s: String): String = squash(s).replace("ph", "f").replace("wh", "w").replace("ck", "k").replace("ee", "i").replace("oo", "u").replace("ay", "e").replace("ey", "e")
+    fun sound(s: String): String = squash(s).replace("ph", "f").replace("wh", "w").replace("ck", "k").replace("ee", "i").replace("oo", "u").replace("ay", "e").replace("ey", "e")
         .replace("z", "s").replace("c", "k").replace("q", "k").replace("y", "i").fold(StringBuilder()) { b, ch -> if (b.isEmpty() || b.last() != ch) b.append(ch); b }.toString()
 
     /** The number of single-letter changes between two words. */
-    private fun distance(a: String, b: String): Int {
+    fun distance(a: String, b: String): Int {
         if (kotlin.math.abs(a.length - b.length) > 3) return 9
         var prev = IntArray(b.length + 1) { it }
         for (x in 1..a.length) {
