@@ -1,74 +1,93 @@
 # Bittu
 
-A personal voice assistant for Android that lives on your own phone. You say "Bittu" and it does things on the
-phone, answers questions, remembers what you tell it, and can pick up phone calls for you and talk to the caller.
+Bittu is our voice assistant for Android. It lives on the phone itself. We say "Bittu" and it does things on the
+phone, answers questions, remembers what we tell it, and picks up phone calls for us and talks to the caller.
 
-Everything runs on the phone itself. There is no Bittu server, no account and no call forwarding. The only things
-that leave the phone are the requests to the AI services whose keys you add yourself.
+We built it because we wanted an assistant that is really ours: no Bittu server, no account, no call forwarding.
+Everything runs on the phone. The only things that leave it are the requests to the AI services we chose and
+added keys for.
 
-> **Status: a personal project, built and tested on one phone** (Xiaomi 11 Lite NE, Android 14, HyperOS 2.0).
-> It is not on the Play Store and could not be: it relies on developer features that Play does not allow.
-> Expect to read logs. Read [What does not work](#what-does-not-work) before you install it.
-
-## What it does
+## What Bittu does
 
 **Talking to Bittu**
 - Wake word: say "Bittu" at any time, also from the lock screen. Follow-up sentences within 12 seconds need no name.
-- Plain commands run at once without any AI call: open an app, torch, Wi-Fi, Bluetooth, volume, brightness, home,
-  back, scroll, modes. Most take under 0.2 seconds.
-- Everything else goes to Claude (your Anthropic key) with tools: call a person, send a message, read and tap what
-  is on the screen in any app, read and reply to notifications, look things up on the internet, find where the
-  phone is, read the phone's own details, run any shell command.
-- Speaks with the phone's own voice, ElevenLabs or Fish Audio.
+- Plain commands run at once with no AI call at all: open an app, torch, Wi-Fi, Bluetooth, volume, brightness,
+  home, back, scroll, modes. Most take under 0.2 seconds.
+- Everything else goes to the AI with tools: call a person, send a message, read and tap what is on the screen in
+  any app, read and reply to notifications, look things up on the internet, find where the phone is, read the
+  phone's own details, run any shell command.
+- It speaks with the phone's own voice, ElevenLabs or Fish Audio.
 
 **Answering calls**
-- In a mode such as Driving, Bittu rings you first, then picks up and talks to the caller with Gemini Live.
-- It knows the caller from your contacts, greets saved contacts in Telugu and others in English, then follows the
+- In a mode such as Driving, Bittu rings us first, then picks up and talks to the caller live.
+- It knows the caller from our contacts, greets saved contacts in Telugu and others in English, then follows the
   caller's language.
-- It takes a message, can buzz your phone so you take the call over, and leaves a summary notification afterwards.
-- If Gemini Live cannot be reached it falls back to a three-step chain: hear (ElevenLabs, Fish Audio or AssemblyAI),
-  think (Claude or Gemini text), speak (ElevenLabs or Fish Audio).
+- It takes a message, can buzz our phone so we take the call over, and leaves a summary notification afterwards.
+- If the live voice service cannot be reached, it carries on with a three-step backup: hear, think, speak.
 
 **Modes**
-- Driving, Meeting, Sleep, Strangers, Off, and modes you make yourself with your own sentence for callers.
+- Driving, Meeting, Sleep, Strangers, Off, and modes we make ourselves with our own sentence for callers.
 - A mode can run for a set time ("for 1 hour", "until 7 AM") and ends by itself.
 
 **Who hears what**
 - Each person has a sharing level, from "nothing" to "everything".
-- Family, listed by exact phone number, may ask where you are, what you are doing next and what is in your
-  calendar. Bittu only answers what they ask and never volunteers it.
+- Family, listed by exact phone number, may ask where we are, what we are doing next and what is in our calendar.
+  Bittu answers only what they ask and never volunteers it.
 - What a caller is not allowed to hear is left out of the AI's instructions entirely, so it cannot be talked out of it.
 
 **Memory**
-- Starts empty. Bittu saves what you tell it about yourself, your people and your routines, and keeps a diary line
-  per conversation.
-- No limit: recent notes are folded into a short profile automatically, and the originals are kept for look-up.
-- Stored only in the app's private storage. A Memory page shows it and can erase one item or all of it.
+- It starts empty. Bittu saves what we tell it about ourselves, our people and our routines, and keeps a diary
+  line for each conversation.
+- There is no limit: recent notes are folded into a short profile automatically, and the originals are kept for
+  look-up.
+- It is stored only in the app's private storage. A Memory page shows it and can erase one item or all of it.
 
-**Model pickers**
-- Model and voice lists are fetched from each service with your own key and refreshed daily.
+## AI services Bittu works with
 
-## How it is built
+We did not want to be tied to one company, so Bittu takes whichever keys you have. Model and voice lists are
+loaded from each service with your own key and refreshed every day, so new models appear by themselves.
+
+| Service | What Bittu uses it for |
+|---|---|
+| **Anthropic (Claude)** | The assistant that listens to you and acts with tools; thinking in the call backup; memory |
+| **Google Gemini** | Gemini Live for talking on calls; text answers; call summaries; thinking in the call backup |
+| **OpenAI** | Text answers |
+| **OpenRouter** | Text answers, with any model it offers |
+| **Kilo Code** | Text answers |
+| **Any service that speaks the OpenAI format** | Text answers: enter its address and model name |
+| **ElevenLabs** | Bittu's voice; hearing the caller in the call backup |
+| **Fish Audio** | Bittu's voice (its `s2.1-pro-free` model costs nothing within fair-use limits); hearing the caller in the call backup |
+| **AssemblyAI** | Hearing the caller in the call backup (Hindi and English) |
+| **The phone itself** | Hearing "Bittu" and your words with Android's on-device recognizer, and speaking with the phone's own voice. Free, no key. |
+
+Today the tool-using assistant runs on Claude and live calls run on Gemini Live. The other text services answer
+questions. The backup chain for calls mixes whatever is available: hear with ElevenLabs, Fish Audio or AssemblyAI;
+think with Claude or Gemini; speak with ElevenLabs or Fish Audio.
+
+You pay each service directly with your own key. Keys are kept in the app's private storage and are sent only to
+the service they belong to.
+
+## How we built it
 
 | Part | What it is |
 |---|---|
-| `ui/` | The interface: plain HTML, CSS and JavaScript modules, no framework and no build step. Runs in a WebView. |
-| `android/` | The app: Kotlin, no UI toolkit. Hosts the WebView and holds every background part. |
+| `ui/` | The interface: plain HTML, CSS and JavaScript modules, no framework and no build step. It runs in a WebView. |
+| `android/` | The app: Kotlin, no UI toolkit. It hosts the WebView and holds every background part. |
 | `android/.../shell/` | The **helper**: a small program that runs as Android's `shell` user, started through the phone's own Wireless debugging, the way Shizuku is. |
-| `probe/` | Test tools: a regression check that drives the real phone, and a call-audio probe. |
+| `probe/` | Our test tools: a regression check that drives the real phone, and a call-audio probe. |
 
 **Why a helper?** An ordinary app cannot put sound into a phone call, hear the caller, flip protected switches or
 answer a call silently. Android's `shell` user can. The app pairs once with the phone's Wireless debugging and from
 then on starts the helper by itself, with no computer. The helper puts Bittu's voice straight onto the call line
-(the telephony output) and reads the caller's side from it.
+and reads the caller's side from it.
 
 The helper lives inside Android's debugging service, so Android stops it whenever that service restarts (plugging a
-cable or charger in or out does this). Bittu notices and starts it again within about 10 seconds, also when locked
-and asleep.
+cable or charger in or out does this). Bittu notices and starts it again within about 10 seconds, also when the
+phone is locked and asleep.
 
 ## Every permission, and why
 
-Bittu asks for a lot, because its job is to operate the whole phone for its owner. Nothing here is used for
+Bittu asks for a lot, because its job is to operate the whole phone for its owner. None of it is used for
 advertising or analytics; there is none in the code.
 
 | Permission | Why Bittu needs it |
@@ -81,56 +100,36 @@ advertising or analytics; there is none in the code.
 | Calendar (`READ_CALENDAR`) | To tell callers with full access what you have planned today and tomorrow, when they ask. Read-only. |
 | Notifications (`POST_NOTIFICATIONS`) | The "listening" notice Android requires, call summaries, and the take-over alert. |
 | Notification access (a setting you switch on) | To read your notifications aloud and reply to messages from them. |
-| Accessibility (a setting you switch on) | "Screen control": to read, tap, type and scroll inside other apps when you ask ("send this to Akka"). **See the warning below.** |
+| Accessibility (a setting you switch on) | "Screen control": to read, tap, type and scroll inside other apps when you ask ("send this to Akka"). See the note on payment apps below. |
 | Internet, network state (`INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `CHANGE_WIFI_MULTICAST_STATE`) | To reach the AI services, and to find the phone's own Wireless debugging on the local network for pairing. |
 | Run at start-up, stay awake, exact alarms (`RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK`, `SCHEDULE_EXACT_ALARM`, `FOREGROUND_SERVICE`) | To keep listening in the background, restart the helper while the phone sleeps, and end a timed mode on the minute. |
 | Vibrate (`VIBRATE`) | Bittu buzzes instead of beeping when it has heard its name. |
-| Secure settings (`WRITE_SECURE_SETTINGS`) | Granted by the helper, not by a prompt. Lets the app switch Wireless debugging on for a few seconds to restart the helper, then off again. |
+| Secure settings (`WRITE_SECURE_SETTINGS`) | Granted by the helper, not by a prompt. It lets the app switch Wireless debugging on for a few seconds to restart the helper, then off again. |
 
 The helper, as the `shell` user, additionally: captures and injects call audio, answers and ends calls, changes
 system settings (brightness, Do Not Disturb, developer options), grants the app the permissions above, and runs
 shell commands the assistant asks for.
 
-## Read this before installing
+## Good to know before installing
 
 - **Payment apps may block you.** Google Pay refuses to pay while any downloaded app has Accessibility switched
-  on, and Bittu's screen control is one. To pay you must switch it off and restart the phone. Other banking and UPI
-  apps may do the same. This is the payment app protecting you; Bittu does not try to hide from it.
+  on, and Bittu's screen control is one. To pay, switch it off and restart the phone. Other banking and UPI apps
+  may do the same. That is the payment app protecting you, and Bittu does not try to hide from it.
 - **Developer options and USB debugging stay on.** That is how the helper is started.
 - **"Restart without Wi-Fi" keeps debugging port 5555 open.** It is off by default. With it on, the helper can
   come back on mobile data. Only devices you have approved can connect, but never tap Allow on a debugging prompt
   you did not expect.
-- **The assistant can do anything on the phone.** It is told never to type passwords or PINs and never to share
-  codes, but those are instructions to an AI model, not hard locks. Anyone who can speak to your unlocked phone
-  can give Bittu commands; it does not recognise your voice.
-- **Your keys are yours.** Keys are kept in the app's private storage and in a file only the `shell` user can
-  read. They are sent only to the service they belong to.
+- **The assistant can do anything on the phone.** We tell it never to type passwords or PINs and never to share
+  codes, but those are instructions to an AI model, not hard locks. Anyone who can speak to your unlocked phone can
+  give Bittu commands; it does not recognise your voice.
 - **Recording.** For fault-finding, the helper keeps the first 45 seconds of the caller's side of the most recent
-  call in `/data/local/tmp/bittu/last_call_in.pcm`, replaced on every call. Check what the law where you live
-  says about recording calls, and remove that line in `Daemon.kt` if you do not want it.
+  call in `/data/local/tmp/bittu/last_call_in.pcm`, replaced on every call. Check what the law where you live says
+  about recording calls, and remove that line in `Daemon.kt` if you do not want it.
 
-## Services and keys
+## Install
 
-| Used for | Service | Needed? |
-|---|---|---|
-| Thinking when you talk to Bittu | Anthropic (Claude) | Yes |
-| Talking on calls | Google Gemini Live | Yes, or the backup chain below |
-| Backup on calls, optional voice | ElevenLabs, Fish Audio, AssemblyAI | Optional |
-
-You pay each service directly. There is no spending limit in the app.
-
-## Build and install
-
-You need: a recent JDK (it is built with JDK 25), the Android SDK (compile SDK 37), Gradle 9.8, a phone on Android 12 or newer with
-Developer options, and Node.js for the test tools. There is no Gradle wrapper in the repository.
-
-```
-cd android
-gradle assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
-
-Create `android/local.properties` with `sdk.dir=` pointing at your Android SDK first.
+Download the APK from [Releases](https://github.com/hari7993/bittu/releases). It needs a 64-bit phone on Android 12
+or newer with Developer options.
 
 Then on the phone:
 1. Open Bittu and go through **Phone access**: allow the permissions, switch on notification access and screen control.
@@ -140,12 +139,26 @@ Then on the phone:
 4. On Xiaomi phones: allow autostart and set battery saver to "No restrictions" for Bittu. The helper sets these
    too, but check them.
 
+## Build it yourself
+
+You need a recent JDK (we build with JDK 25), the Android SDK (compile SDK 37), Gradle 9.8, and Node.js for the
+test tools. There is no Gradle wrapper in the repository.
+
+```
+cd android
+gradle assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Create `android/local.properties` with `sdk.dir=` pointing at your Android SDK first. For a signed release build,
+add `android/keystore.properties` with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`.
+
 `probe/check.sh` runs 28 checks against a connected phone and puts every setting back.
 
-## What does not work
+## What does not work yet
 
-- **Only tested on one phone.** Putting voice on the call line depends on the phone listing a telephony output
-  and letting the `shell` user use it. Many phones will differ.
+- **We use it on one phone:** a Xiaomi 11 Lite NE on Android 14 and HyperOS 2.0. Putting Bittu's voice on the
+  call line depends on the phone, so other models may behave differently.
 - **WhatsApp and other internet calls** are not answered. Only normal SIM calls.
 - **Bluetooth and car kits** during a Bittu call are untested.
 - **A second call** while Bittu is on one just rings.
@@ -160,7 +173,6 @@ Then on the phone:
 - Fonts: Inter and Bricolage Grotesque, both under the SIL Open Font License.
 - [libadb-android](https://github.com/MuntashirAkon/libadb-android) by Muntashir Al-Islam, for talking to the
   phone's own Wireless debugging. The self-start idea follows [Shizuku](https://github.com/RikkaApps/Shizuku).
-- Built with Claude Code.
 
 ## License
 
