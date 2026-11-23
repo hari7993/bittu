@@ -143,6 +143,7 @@ object Daemon {
                         "takeover" -> Calls.takeOver()
                         "testkey" -> res.put("result", Calls.testKey())
                         "testbackup" -> res.put("result", Calls.testBackup(req.optString("only")))
+                        "testrecheck" -> res.put("result", runCatching { Recheck.callerLines(config, File(dir, "last_call_in.pcm").readBytes()).joinToString(" || ") { "%.0fs %s".format(it.at, it.text) }.ifEmpty { "nothing came back" } }.getOrElse { "failed: $it" })
                         "stop" -> { synchronized(out) { out.println(res.toString()); out.flush() }; exitProcess(0) }
                         else -> res.put("ok", false).put("error", "unknown request")
                     }
@@ -344,9 +345,12 @@ object Calls {
         handing = false
         val queue = LinkedBlockingQueue<ByteArray>()
         var heard = StringBuilder(); var said = StringBuilder()
+        var audioStart = 0L           // the moment the recording of the caller's side began
+        var heardAt = 0L; var saidAt = 0L
+        val callAudio = java.io.ByteArrayOutputStream() // the caller's side of the whole call, to be written down properly afterwards
         fun flush() {
-            if (heard.isNotBlank()) { lines.put(JSONArray().put("t").put(heard.toString().trim())); Daemon.emit(JSONObject().put("ev", "line").put("who", "t").put("text", heard.toString().trim())); heard = StringBuilder() }
-            if (said.isNotBlank()) { lines.put(JSONArray().put("b").put(said.toString().trim())); Daemon.emit(JSONObject().put("ev", "line").put("who", "b").put("text", said.toString().trim())); said = StringBuilder() }
+            if (heard.isNotBlank()) { lines.put(JSONArray().put("t").put(heard.toString().trim()).put(heardAt)); Daemon.emit(JSONObject().put("ev", "line").put("who", "t").put("text", heard.toString().trim())); heard = StringBuilder() }
+            if (said.isNotBlank()) { lines.put(JSONArray().put("b").put(said.toString().trim()).put(saidAt)); Daemon.emit(JSONObject().put("ev", "line").put("who", "b").put("text", said.toString().trim())); said = StringBuilder() }
         }
         val events = object : LiveSession.Events {
             override fun audio(pcm24k: ByteArray) { fromGemini += pcm24k.size; lastGemini = System.currentTimeMillis(); lastSound = lastGemini; queue.put(Prompt.to16k(pcm24k)) }
@@ -354,8 +358,8 @@ object Calls {
             // When Bittu's voice comes out of the earpiece (not the call line), the line carries it back and Gemini takes it for
             // the caller cutting in. There, an "interrupted" that arrives while Bittu is speaking is its own echo and is ignored.
             override fun interrupted() { if (!onLine && System.currentTimeMillis() < speakingUntil) { cuts++; return }; Daemon.note("  the caller cut in; Bittu stops talking"); queue.clear(); cut = true }
-            override fun heard(text: String) { if (said.isNotBlank()) flush(); heard.append(text); heardWords += text.length; lastSound = System.currentTimeMillis() }
-            override fun said(text: String) { if (heard.isNotBlank()) flush(); said.append(text) }
+            override fun heard(text: String) { if (said.isNotBlank()) flush(); if (heard.isEmpty()) heardAt = System.currentTimeMillis() - audioStart; heard.append(text); heardWords += text.length; lastSound = System.currentTimeMillis() }
+            override fun said(text: String) { if (heard.isNotBlank()) flush(); if (said.isEmpty()) saidAt = System.currentTimeMillis() - audioStart; said.append(text) }
             override fun turnDone() = flush()
             override fun tool(name: String, args: JSONObject): String { Daemon.note("Bittu used: $name"); return when (name) {
                 "end_call" -> { ending = true; "ending the call" }
@@ -414,6 +418,7 @@ object Calls {
             val track = trk!!; val record = rec!!
             Daemon.emit(JSONObject().put("ev", "call").put("state", "live").put("who", who).put("number", number))
             record.startRecording(); track.play()
+            audioStart = System.currentTimeMillis()
             // Muting the microphone is only safe when Bittu's voice goes down the call line itself. If it is coming out of
             // the earpiece instead, the microphone is the only way the caller hears it.
             if (cfg.optBoolean("privateCall", true) && onLine) {
@@ -469,6 +474,7 @@ object Calls {
                 val n = record.read(buf, 0, buf.size)
                 if (n < 0) { why = "call over"; break }
                 if (n > 0 && dumped < 16000 * 2 * 45) { runCatching { dump?.write(buf, 0, n) }; dumped += n } // the first 45 seconds of what the line sounded like, for fault-finding; replaced on every call
+                if (n > 0 && callAudio.size() < 16000 * 2 * 300) callAudio.write(buf, 0, n) // at most five minutes, kept in memory only until the note is written
                 // Only when the voice comes out of the earpiece: while Bittu speaks, Gemini is sent silence instead of the line, so
                 // it never hears itself. On the call line itself a real call's recording showed no echo, so the caller is always heard.
                 if (n > 0 && !onLine && (queue.isNotEmpty() || System.currentTimeMillis() < speakingUntil)) { live.sendAudio(quietFrame, n); fromCaller += n }
@@ -513,6 +519,21 @@ object Calls {
         // The note is written in the background, so Bittu is free at once if another call comes straight after this one.
         val took = handing
         thread(name = "bittu-note") {
+            // The caller's lines written during the call are often in the wrong language. Write them again from the recording,
+            // and put them back among Bittu's lines by time.
+            runCatching {
+                val bittuSaid = (0 until lines.length()).map { lines.getJSONArray(it) }.filter { it.getString(0) == "b" }.joinToString(" / ") { it.getString(1) }
+                val better = Recheck.callerLines(cfg, callAudio.toByteArray(), bittuSaid)
+                if (better.isNotEmpty()) {
+                    val merged = ArrayList<Pair<Long, JSONArray>>()
+                    for (i in 0 until lines.length()) lines.getJSONArray(i).let { if (it.getString(0) != "t") merged.add(it.optLong(2, 0) to it) }
+                    for (b in better) merged.add((b.at * 1000).toLong() to JSONArray().put("t").put(b.text).put((b.at * 1000).toLong()))
+                    merged.sortBy { it.first }
+                    while (lines.length() > 0) lines.remove(0)
+                    for (m in merged) lines.put(m.second)
+                    Daemon.note("the caller's words were written again from the recording: ${better.size} sentences")
+                }
+            }.onFailure { Daemon.note("writing the caller's words again failed: $it") }
             val transcript = (0 until lines.length()).joinToString("\n") { val l = lines.getJSONArray(it); (if (l.getString(0) == "b") "Bittu: " else "Caller: ") + l.getString(1) }
             var summary = if (lines.length() == 0) "" else LiveSession.ask(cfg.optString("geminiKey"), cfg.optString("textModel", "gemini-flash-latest"),
                 "Summarise this phone call for the phone's owner in at most two short plain sentences, addressed to them as \"you\". Say who called, what they wanted, and anything the owner must do.\n\n$transcript")
