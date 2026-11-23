@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/hari7993/bittu/releases/latest"><b>Download the app</b></a>
+  &nbsp;·&nbsp; <a href="#bittu-answers-your-calls">Answers your calls</a>
   &nbsp;·&nbsp; <a href="#what-bittu-does">What it does</a>
   &nbsp;·&nbsp; <a href="#ai-services-bittu-works-with">AI services</a>
   &nbsp;·&nbsp; <a href="#every-permission-and-why">Permissions</a>
@@ -12,8 +13,9 @@
 
 # Bittu
 
-Bittu is our voice assistant for Android. It lives on the phone itself. We say "Bittu" and it does things on the
-phone, answers questions, remembers what we tell it, and picks up phone calls for us and talks to the caller.
+Bittu is our voice assistant for Android, and its main job is this: **when we can't pick up, Bittu answers the
+call for us and talks to the caller.** It lives on the phone itself. We say "Bittu" and it also runs the phone,
+answers questions and remembers what we tell it.
 
 We built it because we wanted an assistant that is really ours: no Bittu server, no account, no call forwarding.
 Everything runs on the phone. The only things that leave it are the requests to the AI services we chose and
@@ -29,6 +31,33 @@ added keys for.
 
 <p align="center"><sub>Home · Modes · Who hears what · Brain and keys · Try a call. The names in these pictures are examples.</sub></p>
 
+## Bittu answers your calls
+
+> **You are driving, in a meeting or asleep. The phone rings. Bittu picks up and speaks to the caller for you.**
+
+This is what Bittu is built around. You switch on a mode, and from then on:
+
+1. **It lets the phone ring for you first**, for as long as you set. If you pick up, Bittu stays out.
+2. **It answers and talks**, in a natural voice, live. It knows who is calling from your contacts and greets them
+   by name, in Telugu for people you have saved and in English for others, then follows the caller's language.
+3. **It tells each caller only what you allow.** A stranger hears that you can't take the call. Family can ask
+   where you are and when you will be free.
+4. **It takes the message**, and if it is urgent it buzzes your phone so you can take the call over.
+5. **It hangs up politely and leaves you a summary**: who called, what they wanted, what you need to do.
+
+| Mode | What Bittu does with a call |
+|---|---|
+| **Driving** | Answers, says you are driving, takes a message |
+| **Meeting** | Declines quietly and sends your "in a meeting" text |
+| **Sleep** | Answers so the phone stays silent; people you marked can still ring through |
+| **Strangers** | Answers only numbers you have not saved and asks what they want |
+| **Your own modes** | You write the sentence, for example "playing cricket, back after 6", and choose answer or decline |
+| **Off** | Bittu does nothing; calls ring as usual |
+
+A mode can run until you switch it off, or for a set time such as "for 1 hour" or "until 7 AM", and it ends by itself.
+
+All of this happens on your own phone, on your own number. There is no call forwarding and no second number.
+
 **In one minute**
 
 | You say or do | Bittu does |
@@ -42,6 +71,13 @@ added keys for.
 
 ## What Bittu does
 
+**Answering calls**
+- In a mode such as Driving, Bittu rings us first, then picks up and talks to the caller live.
+- It knows the caller from our contacts, greets saved contacts in Telugu and others in English, then follows the
+  caller's language.
+- It takes a message, can buzz our phone so we take the call over, and leaves a summary notification afterwards.
+- If the live voice service cannot be reached, it carries on with a three-step backup: hear, think, speak.
+
 **Talking to Bittu**
 - Wake word: say "Bittu" at any time, also from the lock screen. Follow-up sentences within 12 seconds need no name.
 - Plain commands run at once with no AI call at all: open an app, torch, Wi-Fi, Bluetooth, volume, brightness,
@@ -50,13 +86,6 @@ added keys for.
   any app, read and reply to notifications, look things up on the internet, find where the phone is, read the
   phone's own details, run any shell command.
 - It speaks with the phone's own voice, ElevenLabs or Fish Audio.
-
-**Answering calls**
-- In a mode such as Driving, Bittu rings us first, then picks up and talks to the caller live.
-- It knows the caller from our contacts, greets saved contacts in Telugu and others in English, then follows the
-  caller's language.
-- It takes a message, can buzz our phone so we take the call over, and leaves a summary notification afterwards.
-- If the live voice service cannot be reached, it carries on with a three-step backup: hear, think, speak.
 
 **Modes**
 - Driving, Meeting, Sleep, Strangers, Off, and modes we make ourselves with our own sentence for callers.
