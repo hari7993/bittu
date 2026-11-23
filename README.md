@@ -1,3 +1,15 @@
+<p align="center">
+  <img src="docs/banner.png" alt="Bittu: a voice assistant that lives on your phone" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/hari7993/bittu/releases/latest"><b>Download the app</b></a>
+  &nbsp;·&nbsp; <a href="#what-bittu-does">What it does</a>
+  &nbsp;·&nbsp; <a href="#ai-services-bittu-works-with">AI services</a>
+  &nbsp;·&nbsp; <a href="#every-permission-and-why">Permissions</a>
+  &nbsp;·&nbsp; <a href="#install">Install</a>
+</p>
+
 # Bittu
 
 Bittu is our voice assistant for Android. It lives on the phone itself. We say "Bittu" and it does things on the
@@ -6,6 +18,27 @@ phone, answers questions, remembers what we tell it, and picks up phone calls fo
 We built it because we wanted an assistant that is really ours: no Bittu server, no account, no call forwarding.
 Everything runs on the phone. The only things that leave it are the requests to the AI services we chose and
 added keys for.
+
+<p align="center">
+  <img src="docs/shot-home.png" alt="Home: Bittu is listening" width="19%">
+  <img src="docs/shot-modes.png" alt="Modes: Driving, Meeting, Sleep" width="19%">
+  <img src="docs/shot-person.png" alt="Choosing what one person may hear" width="19%">
+  <img src="docs/shot-brain.png" alt="Brain and keys: pick any AI service" width="19%">
+  <img src="docs/shot-test.png" alt="Try a call without dialling" width="19%">
+</p>
+
+<p align="center"><sub>Home · Modes · Who hears what · Brain and keys · Try a call. The names in these pictures are examples.</sub></p>
+
+**In one minute**
+
+| You say or do | Bittu does |
+|---|---|
+| "Bittu, open YouTube" | Opens it at once, with no AI call |
+| "Bittu, send this to Akka on WhatsApp" | Reads the screen, taps share, finds her, sends |
+| "Bittu, what's the weather today?" | Finds where you are, searches, answers in a sentence |
+| "I go to the gym every morning at six" | Remembers it, and still knows next month |
+| Turn on Driving mode | Picks up your calls, talks to the caller, leaves you a summary |
+| Amma calls while you drive | Greets her in Telugu, tells her what she asks, and can buzz you to take over |
 
 ## What Bittu does
 
@@ -172,9 +205,25 @@ add `android/keystore.properties` with `storeFile`, `storePassword`, `keyAlias` 
 
 ## Credits
 
-- Fonts: Inter and Bricolage Grotesque, both under the SIL Open Font License.
+- **Chitti**, the assistant app that inspired Bittu. The look of our interface follows its style, and its "modem
+  path" setting pointed us to how a voice can be put on the call line. Bittu's code is our own; nothing was copied
+  from Chitti's.
 - [libadb-android](https://github.com/MuntashirAkon/libadb-android) by Muntashir Al-Islam, for talking to the
   phone's own Wireless debugging. The self-start idea follows [Shizuku](https://github.com/RikkaApps/Shizuku).
+- Fonts: Inter and Bricolage Grotesque, both under the SIL Open Font License.
+- Built with Claude Code.
+
+### Licences of what is inside the app
+
+| Part | Licence |
+|---|---|
+| Bittu's own code | MIT |
+| libadb-android | GPL-3.0-or-later or Apache-2.0, at the user's choice; we use it under Apache-2.0 |
+| sun-security-android | GPL-2.0 with the Classpath exception, which allows linking from an app under another licence |
+| Conscrypt | Apache-2.0 |
+| Inter, Bricolage Grotesque | SIL Open Font License 1.1 |
+
+The AI services are not part of Bittu. Each has its own terms, and you use them with your own key.
 
 ## License
 
