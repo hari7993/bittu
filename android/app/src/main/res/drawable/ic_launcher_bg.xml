@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The icon's backdrop: a violet field with a lighter glow in the top-left corner, opposite the toy. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#5B3DF5" android:pathData="M0,0h108v108h-108z" />
+    <path android:fillColor="#7C63FF" android:pathData="M-14,22a44,44 0 1,0 88,0a44,44 0 1,0 -88,0z" />
+    <path android:fillColor="#9A86FF" android:fillAlpha="0.55" android:pathData="M2,14a24,24 0 1,0 48,0a24,24 0 1,0 -48,0z" />
+</vector>

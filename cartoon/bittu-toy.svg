@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 700" width="600" height="700">
+  <defs>
+    <clipPath id="mouthClip">
+      <path d="M274 338 Q300 390 326 338 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- backdrop -->
+  <rect width="600" height="700" rx="28" fill="#FFF6E5"/>
+  <ellipse cx="300" cy="614" rx="160" ry="16" fill="#000" opacity="0.12"/>
+
+  <!-- wind-up key (behind body) -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M185 310 L132 310" stroke="#8A6200" stroke-width="16"/>
+    <path d="M185 310 L132 310" stroke="#F2B705" stroke-width="8"/>
+    <circle cx="112" cy="290" r="17" stroke="#8A6200" stroke-width="15"/>
+    <circle cx="112" cy="330" r="17" stroke="#8A6200" stroke-width="15"/>
+    <circle cx="112" cy="290" r="17" stroke="#F2B705" stroke-width="7"/>
+    <circle cx="112" cy="330" r="17" stroke="#F2B705" stroke-width="7"/>
+  </g>
+
+  <!-- arms (behind body) -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M430 365 C478 345 500 305 505 262" stroke="#1F5E32" stroke-width="24"/>
+    <path d="M430 365 C478 345 500 305 505 262" stroke="#6FCF73" stroke-width="12"/>
+    <path d="M170 385 C128 400 108 428 110 458" stroke="#1F5E32" stroke-width="24"/>
+    <path d="M170 385 C128 400 108 428 110 458" stroke="#6FCF73" stroke-width="12"/>
+  </g>
+  <!-- waving mitten hand -->
+  <g fill="#6FCF73" stroke="#1F5E32" stroke-width="6">
+    <circle cx="484" cy="232" r="11"/>
+    <circle cx="508" cy="238" r="24"/>
+    <circle cx="110" cy="470" r="21"/>
+  </g>
+  <!-- wave marks -->
+  <g fill="none" stroke="#1F5E32" stroke-width="5" stroke-linecap="round">
+    <path d="M540 205 Q552 220 546 240"/>
+    <path d="M556 195 Q574 222 562 252"/>
+  </g>
+
+  <!-- legs and boots -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M258 465 L258 580" stroke="#1F5E32" stroke-width="20"/>
+    <path d="M258 465 L258 580" stroke="#6FCF73" stroke-width="9"/>
+    <path d="M342 465 L342 580" stroke="#1F5E32" stroke-width="20"/>
+    <path d="M342 465 L342 580" stroke="#6FCF73" stroke-width="9"/>
+  </g>
+  <g fill="#FF9F1C" stroke="#7A3E00" stroke-width="6">
+    <ellipse cx="250" cy="594" rx="36" ry="18"/>
+    <ellipse cx="350" cy="594" rx="36" ry="18"/>
+  </g>
+
+  <!-- sprout -->
+  <path d="M300 174 C298 152 302 138 300 120" fill="none" stroke="#1F5E32" stroke-width="7" stroke-linecap="round"/>
+  <g fill="#3FAE4B" stroke="#1F5E32" stroke-width="6" stroke-linejoin="round">
+    <path d="M300 122 C270 120 250 100 248 78 C275 80 296 96 300 122 Z"/>
+    <path d="M300 122 C330 120 350 100 352 78 C325 80 304 96 300 122 Z"/>
+  </g>
+
+  <!-- body: gumdrop toy -->
+  <rect x="155" y="170" width="290" height="300" rx="40"
+        fill="#6FCF73" stroke="#1F5E32" stroke-width="8"/>
+  <rect x="205" y="398" width="190" height="60" rx="26" fill="#C9F2B5"/>
+  <rect x="180" y="196" width="14" height="70" rx="7" fill="#fff" opacity="0.4"/>
+
+  <!-- belly badge -->
+  <circle cx="300" cy="428" r="20" fill="#FFD23F" stroke="#1F5E32" stroke-width="5"/>
+  <text x="300" y="437" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="26" fill="#1F5E32">B</text>
+
+  <!-- face -->
+  <g fill="#fff" stroke="#1F5E32" stroke-width="6">
+    <ellipse cx="240" cy="290" rx="27" ry="36" fill="#2B1A10"/>
+    <ellipse cx="360" cy="290" rx="27" ry="36" fill="#2B1A10"/>
+  </g>
+  <circle cx="249" cy="275" r="10" fill="#fff"/>
+  <circle cx="369" cy="275" r="10" fill="#fff"/>
+  <circle cx="232" cy="306" r="5" fill="#fff"/>
+  <circle cx="352" cy="306" r="5" fill="#fff"/>
+  <g fill="none" stroke="#1F5E32" stroke-width="6" stroke-linecap="round">
+    <path d="M216 236 Q240 224 262 234"/>
+    <path d="M338 234 Q360 224 384 236"/>
+  </g>
+  <ellipse cx="204" cy="350" rx="17" ry="10" fill="#FF9E8A" opacity="0.85"/>
+  <ellipse cx="396" cy="350" rx="17" ry="10" fill="#FF9E8A" opacity="0.85"/>
+  <path d="M274 338 Q300 390 326 338 Z" fill="#7A2B2B"/>
+  <ellipse cx="300" cy="362" rx="13" ry="8" fill="#FF7F8E" clip-path="url(#mouthClip)"/>
+  <path d="M274 338 Q300 390 326 338 Z" fill="none" stroke="#1F5E32" stroke-width="6" stroke-linejoin="round"/>
+
+  <text x="300" y="668" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="22" fill="#1F5E32">Bittu — green toy, concept v1</text>
+</svg>

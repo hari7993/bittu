@@ -1,0 +1,14 @@
+# build output and machine-specific files
+build/
+.gradle/
+local.properties
+*.apk
+*.keystore
+*.jks
+
+# test tool output, logs and recordings: these can hold private data from the phone
+probe/out/
+*.log
+*.pcm
+*.wav
+node_modules/

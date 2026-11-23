@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bittu's face: the lime toy with two eyes and a small smile. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#C6F04E" android:pathData="M54,29c15,0 26,11 26,25.500s-11,24.500-26,24.500s-26,-10-26,-24.500s11,-25.500 26,-25.500z" />
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.55" android:pathData="M39,40a7,4 0 1,0 14,0a7,4 0 1,0 -14,0z" />
+    <path android:fillColor="#1B1A17" android:pathData="M43.500,52a3.800,5.400 0 1,0 7.600,0a3.800,5.400 0 1,0 -7.600,0z" />
+    <path android:fillColor="#1B1A17" android:pathData="M56.900,52a3.800,5.400 0 1,0 7.600,0a3.800,5.400 0 1,0 -7.600,0z" />
+    <path android:strokeColor="#1B1A17" android:strokeWidth="2.200" android:strokeLineCap="round" android:pathData="M50,63.500q4,3.500 8,0" />
+</vector>

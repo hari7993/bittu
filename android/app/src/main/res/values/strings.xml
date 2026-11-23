@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Bittu</string>
+    <string name="access_about">Lets Bittu tap, scroll and type in other apps when you ask it to, for example to press Send on a message. Bittu uses it only while carrying out your command.</string>
+    <string name="tile_talk">Talk to Bittu</string>
+</resources>

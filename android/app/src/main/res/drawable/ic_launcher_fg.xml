@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bittu peeking in from the lower-right corner, tilted, looking up, with a small spark where its voice goes. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- soft shadow under the toy -->
+    <path android:fillColor="#2A1A8C" android:fillAlpha="0.35" android:pathData="M37,78a33,31 0 1,0 66,0a33,31 0 1,0 -66,0z" />
+    <group android:pivotX="69" android:pivotY="73" android:rotation="-10">
+        <!-- body -->
+        <path android:fillColor="#C6F04E" android:pathData="M36,73a33,31 0 1,0 66,0a33,31 0 1,0 -66,0z" />
+        <!-- darker lower edge, so it reads as round -->
+        <path android:fillColor="#A9D62F" android:fillAlpha="0.6" android:pathData="M39,84a33,31 0 0,0 60,0a36,26 0 0,1 -60,0z" />
+        <!-- shine -->
+        <path android:fillColor="#FFFFFF" android:fillAlpha="0.6" android:pathData="M46,56a9,5 0 1,0 18,0a9,5 0 1,0 -18,0z" />
+        <!-- eyes, looking up and to the left -->
+        <path android:fillColor="#1B1A17" android:pathData="M55.500,70a4.300,6.200 0 1,0 8.600,0a4.300,6.200 0 1,0 -8.600,0z" />
+        <path android:fillColor="#1B1A17" android:pathData="M71.500,70a4.300,6.200 0 1,0 8.600,0a4.300,6.200 0 1,0 -8.600,0z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M57.300,66.800a1.500,1.500 0 1,0 3,0a1.500,1.500 0 1,0 -3,0z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M73.300,66.800a1.500,1.500 0 1,0 3,0a1.500,1.500 0 1,0 -3,0z" />
+        <!-- cheeks -->
+        <path android:fillColor="#FF8A7A" android:fillAlpha="0.55" android:pathData="M47,79a3.600,2.600 0 1,0 7.200,0a3.600,2.600 0 1,0 -7.200,0z" />
+        <path android:fillColor="#FF8A7A" android:fillAlpha="0.55" android:pathData="M81,79a3.600,2.600 0 1,0 7.200,0a3.600,2.600 0 1,0 -7.200,0z" />
+        <!-- open, happy mouth -->
+        <path android:fillColor="#1B1A17" android:pathData="M62,80q5.800,1.600 11.600,0q-0.600,7.400 -5.800,7.400q-5.200,0 -5.800,-7.400z" />
+        <path android:fillColor="#FF6B81" android:pathData="M64.600,84.600q3.200,-1.800 6.400,0q-1,2.800 -3.200,2.800q-2.200,0 -3.200,-2.800z" />
+    </group>
+    <!-- a four-point spark and a dot: Bittu's voice -->
+    <path android:fillColor="#FFD84D" android:pathData="M38,26q1.400,7.600 9,9q-7.600,1.400 -9,9q-1.400,-7.600 -9,-9q7.600,-1.400 9,-9z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M49.500,24.500a2.300,2.300 0 1,0 4.600,0a2.300,2.300 0 1,0 -4.600,0z" />
+</vector>
