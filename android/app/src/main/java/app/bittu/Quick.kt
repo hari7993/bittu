@@ -20,8 +20,10 @@ object Quick {
 
         if (t in setOf("stop", "cancel", "never mind", "nevermind", "nothing", "be quiet", "quiet", "shut up", "that's all", "thanks", "thank you")) return ""
 
-        Regex("^(open|launch|start|go to|show) (the |my )?(.+?)( app)?$").find(t)?.let { m ->
-            val app = m.groupValues[3].trim()
+        // "open YouTube", "YouTube open", "open up maps", "take me to settings", and the Telugu and Hindi ways: "YouTube open chey", "YouTube kholo"
+        (Regex("^(open up|open|launch|start|go to|show me|show|take me to|bring up|run) (the |my )?(.+?)( app| application)?$").find(t)?.groupValues?.get(3)
+            ?: Regex("^(the |my )?(.+?)( app)? (open|open chey|open cheyyi|open cheyi|open chei|open karo|open kar|kholo|khol do|theruvu|teruvu|launch|start)$").find(t)?.groupValues?.get(2))?.let { said ->
+            val app = said.trim()
             if (app.split(' ').size <= 3 && Tools.findApp(c, app).isNotEmpty()) return quiet(run("open_app", JSONObject().put("name", app)), "is open")
         }
 

@@ -206,21 +206,83 @@ object Tools {
     }
 
     /** "package/activity|Label" for the app people call by this name, or "". */
+    /** Every app that has an icon on the phone: label, package, activity. Read once and kept for a minute. */
+    private var appList: List<Triple<String, String, String>> = emptyList()
+    private var appListAt = 0L
+    private fun apps(c: Context): List<Triple<String, String, String>> {
+        if (appList.isEmpty() || System.currentTimeMillis() - appListAt > 60_000) {
+            val pm = c.packageManager
+            appList = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0).map { Triple(it.loadLabel(pm).toString(), it.activityInfo.packageName, it.activityInfo.name) }
+            appListAt = System.currentTimeMillis()
+        }
+        return appList
+    }
+
+    private fun squash(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
+
+    /** How a word sounds, roughly, so "phone pay" and "PhonePe" or "watsap" and "WhatsApp" meet. */
+    private fun sound(s: String): String = squash(s).replace("ph", "f").replace("wh", "w").replace("ck", "k").replace("ee", "i").replace("oo", "u").replace("ay", "e").replace("ey", "e")
+        .replace("z", "s").replace("c", "k").replace("q", "k").replace("y", "i").fold(StringBuilder()) { b, ch -> if (b.isEmpty() || b.last() != ch) b.append(ch); b }.toString()
+
+    /** The number of single-letter changes between two words. */
+    private fun distance(a: String, b: String): Int {
+        if (kotlin.math.abs(a.length - b.length) > 3) return 9
+        var prev = IntArray(b.length + 1) { it }
+        for (x in 1..a.length) {
+            val cur = IntArray(b.length + 1); cur[0] = x
+            for (y in 1..b.length) cur[y] = minOf(prev[y] + 1, cur[y - 1] + 1, prev[y - 1] + if (a[x - 1] == b[y - 1]) 0 else 1)
+            prev = cur
+        }
+        return prev[b.length]
+    }
+
+    /** Names people say that are not what the app is called on the phone. */
+    private val appNicknames = mapOf("googlepay" to "gpay", "gpe" to "gpay", "googlemaps" to "maps", "googlemap" to "maps", "map" to "maps", "files" to "filemanager", "myfiles" to "filemanager",
+        "fb" to "facebook", "insta" to "instagram", "yt" to "youtube", "playstore" to "playstore", "googleplay" to "playstore", "watsapp" to "whatsapp", "whatsup" to "whatsapp", "twitter" to "x",
+        "message" to "messages", "sms" to "messages", "dialer" to "phone", "call" to "phone", "browser" to "chrome", "google" to "google", "mail" to "gmail", "email" to "gmail", "photo" to "photos", "pictures" to "gallery")
+
+    /**
+     * Finds an app by the name the owner said. Tried in this order: the exact name, a nickname, a name that starts with
+     * or contains what was said, the package name, and last a name that sounds like it or is one or two letters off
+     * (speech recognizers spell app names loosely). Returns "package/activity|label", or "" when nothing is close.
+     */
     fun findApp(c: Context, name: String): String {
-        val want = name.trim().lowercase().removePrefix("the ").removeSuffix(" app").trim()
+        val want = name.trim().lowercase().removePrefix("the ").removePrefix("my ").removeSuffix(" app").removeSuffix(" application").trim()
         if (want.isEmpty()) return ""
-        val pm = c.packageManager
-        val apps = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0).map { Triple(it.loadLabel(pm).toString(), it.activityInfo.packageName, it.activityInfo.name) }
-        val squash = { s: String -> s.lowercase().filter { it.isLetterOrDigit() } }
+        val list = apps(c)
+        fun pick(w: String): Triple<String, String, String>? = list.firstOrNull { squash(it.first) == w }
+            ?: list.filter { squash(it.first).startsWith(w) }.minByOrNull { it.first.length }
+            ?: list.filter { w.length >= 3 && squash(it.first).contains(w) }.minByOrNull { it.first.length }
         val w = squash(want)
-        val hit = apps.firstOrNull { squash(it.first) == w } ?: apps.filter { squash(it.first).startsWith(w) }.minByOrNull { it.first.length }
-            ?: apps.filter { squash(it.first).contains(w) }.minByOrNull { it.first.length } ?: apps.firstOrNull { it.second.lowercase().split('.').contains(w) } ?: return ""
-        return "${hit.second}/${hit.third}|${hit.first}"
+        var hit = pick(w) ?: appNicknames[w]?.let { pick(it) }
+            // "google maps" for an app labelled "Maps": what was said ends with the app's whole name
+            ?: list.filter { squash(it.first).length >= 4 && w.endsWith(squash(it.first)) }.maxByOrNull { it.first.length }
+            ?: list.firstOrNull { it.second.lowercase().split('.').let { parts -> parts.last() == w || (parts.size > 1 && parts[1] == w) } }
+        if (hit == null && w.length >= 4) {
+            // Nothing matched as written. Compare by sound, then by spelling distance, and accept only a clear winner.
+            val s = sound(want)
+            hit = list.firstOrNull { sound(it.first) == s }
+            if (hit == null) {
+                // Only names that begin with the same sound are compared: opening the wrong app is worse than asking again.
+                val ranked = list.filter { sound(it.first).take(1) == s.take(1) }.map { it to minOf(distance(w, squash(it.first)), distance(s, sound(it.first))) }.sortedBy { it.second }
+                val allow = if (w.length <= 6) 1 else 2
+                if (ranked.isNotEmpty() && ranked[0].second <= allow && (ranked.size < 2 || ranked[1].second > ranked[0].second)) hit = ranked[0].first
+            }
+        }
+        return hit?.let { "${it.second}/${it.third}|${it.first}" } ?: ""
+    }
+
+    /** App names close to what was said, for "did you mean". */
+    fun nearApps(c: Context, name: String): String {
+        val w = squash(name); if (w.length < 2) return ""
+        val s = sound(name)
+        val close = apps(c).map { it.first to minOf(distance(w, squash(it.first)), distance(s, sound(it.first))) }.filter { it.second <= 3 || squash(it.first).take(3) == w.take(3) }.sortedBy { it.second }.map { it.first }.distinct().take(5)
+        return if (close.isEmpty()) "" else " Apps with close names: ${close.joinToString(", ")}."
     }
 
     private fun open(c: Context, name: String): String {
         val found = findApp(c, name)
-        if (found.isEmpty()) return "There is no app called $name on this phone."
+        if (found.isEmpty()) return "There is no app called $name on this phone." + nearApps(c, name)
         if (!ready()) return NO_HELPER
         val (component, label) = found.split('|')
         sh("am start -n '$component'")

@@ -291,21 +291,7 @@ class Bridge(private val activity: Activity, private val send: (String, String) 
      * @return "package/activity|Label" for the best match, or "" when nothing fits
      */
     @JavascriptInterface
-    fun findApp(name: String): String {
-        val want = name.trim().lowercase().removePrefix("the ").removeSuffix(" app").trim()
-        if (want.isEmpty()) return ""
-        val pm = activity.packageManager
-        val apps = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
-            .map { Triple(it.loadLabel(pm).toString(), it.activityInfo.packageName, it.activityInfo.name) }
-        val squash = { s: String -> s.lowercase().filter { it.isLetterOrDigit() } }
-        val w = squash(want)
-        val hit = apps.firstOrNull { squash(it.first) == w }
-            ?: apps.filter { squash(it.first).startsWith(w) }.minByOrNull { it.first.length }
-            ?: apps.filter { squash(it.first).contains(w) }.minByOrNull { it.first.length }
-            ?: apps.firstOrNull { it.second.lowercase().split('.').contains(w) }
-            ?: return ""
-        return "${hit.second}/${hit.third}|${hit.first}"
-    }
+    fun findApp(name: String): String = Tools.findApp(activity.applicationContext, name) // one search, the same one Bittu uses when it opens an app
 
     /** Screen control. Each returns false when it is switched off or the thing was not found. */
     @JavascriptInterface
