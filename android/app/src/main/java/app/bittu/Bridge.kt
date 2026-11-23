@@ -212,6 +212,21 @@ class Bridge(private val activity: Activity, private val send: (String, String) 
     @JavascriptInterface
     fun memoryForget(what: String) { Thread { Memory.forget(activity.applicationContext, what) }.start() }
 
+    /** The tasks Bittu has learned, for the Skills page. */
+    @JavascriptInterface
+    fun skills(): String = Skills.list(activity.applicationContext)
+
+    @JavascriptInterface
+    fun skillDelete(id: String) { Skills.delete(activity.applicationContext, id) }
+
+    /** Test builds only: one request through the same stages as a spoken one (fast path, saved skill, AI with recording). */
+    @JavascriptInterface
+    fun testSay(text: String): String { if (!testBuild) return ""; val c = activity.applicationContext; val t0 = System.currentTimeMillis()
+        Quick.tryHandle(c, text)?.let { return "fast path | ${System.currentTimeMillis() - t0} ms | ${it.ifEmpty { "(done)" }}" }
+        Skills.tryReplay(c, text)?.let { return "saved skill | ${System.currentTimeMillis() - t0} ms | $it" }
+        Agent.reset(); Skills.begin(c, text); val r = Agent.ask(c, text) { }; Skills.end(c, r)
+        return "AI | ${System.currentTimeMillis() - t0} ms | $r" }
+
     /** Test builds only: who a spoken name would reach. Nothing is called or sent. */
     @JavascriptInterface
     fun testWho(name: String): String = if (testBuild) Tools.who(activity.applicationContext, name) else ""

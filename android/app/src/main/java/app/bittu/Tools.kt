@@ -43,6 +43,10 @@ object Tools {
             "send_message" -> message(c, a.optString("app"), a.optString("name"), a.optString("text"))
             "open_app" -> open(c, a.optString("name"))
             "my_location" -> Where.now(c)
+            "navigate_to" -> Links.navigate(c, a.optString("place"))
+            "youtube_search" -> Links.youtube(c, a.optString("query"))
+            "set_alarm" -> Links.alarm(c, a.optInt("hour", -1), a.optInt("minute", 0), a.optString("label"))
+            "set_timer" -> Links.timer(c, (a.optDouble("minutes", 0.0) * 60).toInt(), a.optString("label"))
             "remember" -> if (Agent.remembering) Memory.remember(c, a.optString("fact")) else "Remembered."
             "recall" -> Memory.recall(c, a.optString("about"))
             "forget" -> Memory.forget(c, a.optString("about"))
@@ -171,6 +175,12 @@ object Tools {
         }
         return if (hits.isEmpty()) "" else " Close names in the contacts: ${hits.joinToString(", ")}."
     }
+
+    /** True when the name reaches someone in the family list, Bittu's people or the contacts. */
+    fun knows(c: Context, name: String): Boolean = person(c, name) != null
+
+    /** Runs a command through the helper. Null when the helper cannot be started. */
+    fun shell(cmd: String): String? = if (!ready()) null else sh(cmd)
 
     /** For checking the lookup without calling or sending anything: the name found and the number's last two digits. */
     fun who(c: Context, name: String): String = person(c, name)?.let { it.first + " (number ends in " + it.second.filter(Char::isDigit).takeLast(2) + ")" } ?: ("nobody." + nearby(c, name))

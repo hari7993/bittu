@@ -39,6 +39,9 @@ class ScreenControl : AccessibilityService() {
     private fun label(n: AccessibilityNodeInfo) = (n.text?.toString() ?: "").ifEmpty { n.contentDescription?.toString() ?: "" }
 
     /** Taps the first thing on screen whose words match. Keeps looking for a short while, because screens take time to open. */
+    /** The package of the app on screen right now. */
+    fun front(): String = runCatching { rootInActiveWindow?.packageName?.toString() }.getOrNull().orEmpty()
+
     fun tap(words: String, waitMs: Int): Boolean {
         val until = System.currentTimeMillis() + waitMs
         do {

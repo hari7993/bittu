@@ -223,7 +223,10 @@ class WakeService : Service() {
         worker.execute {
             // Plain commands are done at once, right here. Only the rest is sent to the AI, which takes a few seconds.
             val t0 = System.currentTimeMillis()
-            val reply = Quick.tryHandle(this, text) ?: Agent.ask(this, text) { name -> tell(JSONObject().put("ev", "talk-tool").put("name", name)) }
+            val reply = Quick.tryHandle(this, text)
+                ?: runCatching { Skills.tryReplay(this, text) }.getOrNull()   // a task Bittu has worked out before: replayed with no AI call
+                // A fault in learning a skill must never cost the owner their answer.
+                ?: run { Skills.begin(this, text); val said = Agent.ask(this, text) { name -> tell(JSONObject().put("ev", "talk-tool").put("name", name)) }; runCatching { Skills.end(this, said) }.onFailure { android.util.Log.w("BittuSkills", "could not save a skill: $it") }; said }
             android.util.Log.i("BittuWake", "answer ready in ${System.currentTimeMillis() - t0} ms. heard: \"${text.take(80)}\" -> ${if (reply.isBlank()) "(done silently)" else reply.take(120)}")
             main.post {
                 if (!running) return@post

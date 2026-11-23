@@ -41,6 +41,10 @@ object Agent {
             .put(tool("remember", "Save something about the owner in your long-term memory so you still know it in the coming days and months: who they are, their people, routines, likes, dislikes, plans, worries, how they want you to behave. Use it whenever the owner shares something like that. One fact per call.", Triple("fact", "string", "one short full sentence, for example: The owner's sister is called Priya and lives in Hyderabad.")))
             .put(tool("recall", "Search your long-term memory and your diary of earlier days. Use it when the owner asks what you know or remember, or about something from an earlier day that is not in your notes above.", Triple("about", "string", "key words, a name, or a date such as yesterday or 2026-11-20")))
             .put(tool("forget", "Erase something from your long-term memory because the owner asked you to forget it.", Triple("about", "string", "key words of what to forget")))
+            .put(tool("navigate_to", "Start driving directions to a place in Google Maps. One step, no tapping needed.", Triple("place", "string", "the place or address")))
+            .put(tool("youtube_search", "Open YouTube on the results for a search. One step, no tapping needed.", Triple("query", "string", "what to look for")))
+            .put(tool("set_alarm", "Set an alarm in the phone's clock.", Triple("hour", "number", "0 to 23"), Triple("minute", "number", "0 to 59"), Triple("label", "string", "what the alarm is for, or an empty string"), required = listOf("hour", "minute")))
+            .put(tool("set_timer", "Start a countdown timer.", Triple("minutes", "number", "length in minutes; fractions are allowed"), Triple("label", "string", "what the timer is for, or an empty string"), required = listOf("minutes")))
             .put(tool("my_location", "Where the phone is right now: place name and coordinates. Use it for weather, nearby places, distance and 'where am I'."))
             // Anthropic runs this one itself: live information from the internet (weather, news, scores, prices, facts).
             .put(JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 3))
@@ -103,8 +107,8 @@ object Agent {
 
     /** Carries out one tool. */
     fun runTool(c: Context, name: String, input: JSONObject): String =
-        if (name == "scroll") (ScreenControl.instance?.let { if (it.scroll(input.optString("direction") != "up")) "Scrolled." else "Nothing here can be scrolled." } ?: "Screen control is switched off.")
-        else Tools.run(c, name, input)
+        (if (name == "scroll") (ScreenControl.instance?.let { if (it.scroll(input.optString("direction") != "up")) "Scrolled." else "Nothing here can be scrolled." } ?: "Screen control is switched off.")
+        else Tools.run(c, name, input)).also { Skills.step(name, input, it) }
 
     /**
      * @param onTool called with a tool's name each time Bittu acts, so the screen can show progress
@@ -162,6 +166,7 @@ object Agent {
                             onTool(b.optString("name"))
                             val out = if (b.optString("name") == "scroll") (ScreenControl.instance?.let { if (it.scroll(b.optJSONObject("input")?.optString("direction") != "up")) "Scrolled." else "Nothing here can be scrolled." } ?: "Screen control is switched off.")
                                       else Tools.run(c, b.optString("name"), b.optJSONObject("input") ?: JSONObject())
+                            Skills.step(b.optString("name"), b.optJSONObject("input") ?: JSONObject(), out)
                             results.put(JSONObject().put("type", "tool_result").put("tool_use_id", b.optString("id")).put("content", out))
                         }
                         history.add(JSONObject().put("role", "user").put("content", results))

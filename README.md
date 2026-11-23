@@ -82,6 +82,13 @@ All of this happens on your own phone, on your own number. There is no call forw
 - Wake word: say "Bittu" at any time, also from the lock screen. Follow-up sentences within 12 seconds need no name.
 - Plain commands run at once with no AI call at all: open an app, torch, Wi-Fi, Bluetooth, volume, brightness,
   home, back, scroll, modes. Most take under 0.2 seconds.
+- Common tasks skip the app's screens altogether and use one direct link: a WhatsApp message to a contact, a call,
+  directions in Maps, a YouTube search, an alarm, a timer. "Send hi to Amma on WhatsApp" is one link and one tap.
+- **It learns.** The first time you ask for something inside an app, the AI works it out step by step. When it
+  succeeds, Bittu saves the steps as a skill, with the name or message left blank. The next request of the same
+  shape is replayed directly with no AI call (6 seconds became 1.2 in our test). If a step does not find what it
+  expects, the replay stops and the AI takes over, so a changed screen costs time but not a wrong tap.
+- Apps open by the name you say, however the recognizer spells it: "phone pay", "google pay", "watsapp".
 - Everything else goes to the AI with tools: call a person, send a message, read and tap what is on the screen in
   any app, read and reply to notifications, look things up on the internet, find where the phone is, read the
   phone's own details, run any shell command.
