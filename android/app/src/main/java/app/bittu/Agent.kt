@@ -48,7 +48,7 @@ object Agent {
             .put(tool("reply_to_notification", "Reply to a message notification, using its number from read_notifications.", Triple("number", "number", "the notification's number"), Triple("text", "string", "the reply, in the owner's words")))
     }
 
-    @Synchronized fun reset() { history.clear(); earlier = "" }
+    @Synchronized fun reset() { history.clear(); earlier = ""; Engines.reset() }
 
     private var earlier = ""      // a summary of the part of this conversation that no longer fits
     private var reflectedAt = 0L   // the conversation up to this moment has already been written to memory
@@ -79,14 +79,32 @@ object Agent {
 
     /** One plain question to the AI with no tools and no history. Used by the memory. Returns "" on any failure. */
     fun plain(c: Context, system: String, user: String, maxTokens: Int): String = runCatching {
+        val cfg = runCatching { JSONObject(c.getSharedPreferences("bittu", Context.MODE_PRIVATE).getString("talkCfg", "{}") ?: "{}") }.getOrDefault(JSONObject())
+        val provider = cfg.optString("provider", "anthropic")
+        if (provider != "anthropic") {
+            // The chosen service answers, in plain text.
+            return Llm.ask(c, JSONObject().put("provider", provider).put("model", cfg.optString("model")).put("url", cfg.optString("url")).put("system", system)
+                .put("turns", JSONArray().put(JSONObject().put("role", "user").put("text", user)))).optString("text")
+        }
         val key = c.getSharedPreferences("keys", Context.MODE_PRIVATE).getString("anthropic", "") ?: ""
         if (key.isEmpty()) return ""
-        val cfg = runCatching { JSONObject(c.getSharedPreferences("bittu", Context.MODE_PRIVATE).getString("talkCfg", "{}") ?: "{}") }.getOrDefault(JSONObject())
         val res = post(JSONObject().put("model", cfg.optString("model").ifEmpty { "claude-haiku-5-5" }).put("max_tokens", maxTokens).put("system", system)
             .put("messages", JSONArray().put(JSONObject().put("role", "user").put("content", user))), key, false)
         val content = res.optJSONArray("content") ?: JSONArray()
         (0 until content.length()).map { content.getJSONObject(it) }.filter { it.optString("type") == "text" }.joinToString(" ") { it.optString("text") }.trim()
     }.getOrDefault("")
+
+    /** The instructions Bittu works under, the same for every AI service. */
+    fun system(c: Context, cfg: JSONObject): String = (cfg.optString("prompt", "You are Bittu, a phone assistant.") + "\n\nThis phone: ${Device.summary}. Now: ${Device.now()}. ${Tools.myModes(c).joinToString(", ") { it.optString("name") }.let { if (it.isNotEmpty()) "The owner's own call modes: $it. " else "" }}You have full access to this phone through your tools; for anything they do not cover, use phone_command. Answer fast and short."
+                    + "\n\nHOW YOU ARE WITH THE OWNER: you are their own Bittu, a small loyal companion that lives in their phone and grows with them. Talk like a close friend in easy everyday words, warm and a little playful, never like a customer-service bot. Use their name or what they like to be called now and then. Bring up what you remember when it truly fits (how something they mentioned went, their people by name, their habits), the way a friend would. When they tell you anything about themselves, their people, their day, their likes, plans or worries, save it with remember straight away, without announcing it. If they ask what you know about them or about an earlier day, use recall. If they ask you to forget something, use forget. Commands still come first: do the task, then at most one short friendly line. Spoken answers stay short.\n\n" + Memory.inMind(c))
+
+    /** Bittu's own tools, without the internet search that only Anthropic runs on its side. */
+    fun specs(): List<JSONObject> = (0 until TOOLS.length()).map { TOOLS.getJSONObject(it) }.filter { it.has("input_schema") }
+
+    /** Carries out one tool. */
+    fun runTool(c: Context, name: String, input: JSONObject): String =
+        if (name == "scroll") (ScreenControl.instance?.let { if (it.scroll(input.optString("direction") != "up")) "Scrolled." else "Nothing here can be scrolled." } ?: "Screen control is switched off.")
+        else Tools.run(c, name, input)
 
     /**
      * @param onTool called with a tool's name each time Bittu acts, so the screen can show progress
@@ -94,9 +112,12 @@ object Agent {
      */
     @Synchronized
     fun ask(c: Context, text: String, onTool: (String) -> Unit): String {
+        val cfg = runCatching { JSONObject(c.getSharedPreferences("bittu", Context.MODE_PRIVATE).getString("talkCfg", "{}") ?: "{}") }.getOrDefault(JSONObject())
+        // The owner picks the AI service in Brain and keys. Claude is handled here; the others in Engines.
+        val provider = cfg.optString("provider", "anthropic")
+        if (provider != "anthropic") return Engines.ask(c, cfg, provider, text, onTool)
         val key = c.getSharedPreferences("keys", Context.MODE_PRIVATE).getString("anthropic", "") ?: ""
         if (key.isEmpty()) return "I need your Anthropic key to think. Add it in Settings, under Brain and keys."
-        val cfg = runCatching { JSONObject(c.getSharedPreferences("bittu", Context.MODE_PRIVATE).getString("talkCfg", "{}") ?: "{}") }.getOrDefault(JSONObject())
         // A new subject after three quiet minutes: the old talk goes into long-term memory and the answer starts fresh.
         if (System.currentTimeMillis() - lastAt > 180_000) { settle(c); history.clear(); earlier = "" }
         lastAt = System.currentTimeMillis()
@@ -121,8 +142,7 @@ object Agent {
             var lean = false // some models refuse the extra settings; the request is then sent again without them
             var noThinking = model !in keepsThinking // the owner wants answers without the reasoning step; dropped only if the model refuses the setting
             repeat(14) {
-                val body = JSONObject().put("model", model).put("max_tokens", 2000).put("system", cfg.optString("prompt", "You are Bittu, a phone assistant.") + "\n\nThis phone: ${Device.summary}. Now: ${Device.now()}. ${Tools.myModes(c).joinToString(", ") { it.optString("name") }.let { if (it.isNotEmpty()) "The owner's own call modes: $it. " else "" }}You have full access to this phone through your tools; for anything they do not cover, use phone_command. Answer fast and short."
-                    + "\n\nHOW YOU ARE WITH THE OWNER: you are their own Bittu, a small loyal companion that lives in their phone and grows with them. Talk like a close friend in easy everyday words, warm and a little playful, never like a customer-service bot. Use their name or what they like to be called now and then. Bring up what you remember when it truly fits (how something they mentioned went, their people by name, their habits), the way a friend would. When they tell you anything about themselves, their people, their day, their likes, plans or worries, save it with remember straight away, without announcing it. If they ask what you know about them or about an earlier day, use recall. If they ask you to forget something, use forget. Commands still come first: do the task, then at most one short friendly line. Spoken answers stay short.\n\n" + Memory.inMind(c) + (if (earlier.isNotEmpty()) "\n\nEARLIER IN THIS CONVERSATION: $earlier" else ""))
+                val body = JSONObject().put("model", model).put("max_tokens", 2000).put("system", system(c, cfg) + (if (earlier.isNotEmpty()) "\n\nEARLIER IN THIS CONVERSATION: $earlier" else ""))
                     .put("tools", TOOLS).put("messages", JSONArray(history as Collection<*>))
                 if (!lean) body.put("output_config", JSONObject().put("effort", "low")).put("fallbacks", "default")
                 if (noThinking) body.put("thinking", JSONObject().put("type", "disabled"))

@@ -49,20 +49,22 @@ loaded from each service with your own key and refreshed every day, so new model
 
 | Service | What Bittu uses it for |
 |---|---|
-| **Anthropic (Claude)** | The assistant that listens to you and acts with tools; thinking in the call backup; memory |
-| **Google Gemini** | Gemini Live for talking on calls; text answers; call summaries; thinking in the call backup |
-| **OpenAI** | Text answers |
-| **OpenRouter** | Text answers, with any model it offers |
-| **Kilo Code** | Text answers |
-| **Any service that speaks the OpenAI format** | Text answers: enter its address and model name |
+| **Anthropic (Claude)** | The assistant that listens to you and acts with tools; memory; thinking in the call backup |
+| **Google Gemini** | The assistant with tools; Gemini Live for talking on calls; internet search; call summaries; thinking in the call backup |
+| **OpenAI** | The assistant with tools |
+| **OpenRouter** | The assistant with tools, with any model it offers that can use tools |
+| **Kilo Code** | The assistant with tools: enter its address and model name |
+| **Any service that speaks the OpenAI format** | The assistant with tools: enter its address and model name |
 | **ElevenLabs** | Bittu's voice; hearing the caller in the call backup |
 | **Fish Audio** | Bittu's voice (its `s2.1-pro-free` model costs nothing within fair-use limits); hearing the caller in the call backup |
 | **AssemblyAI** | Hearing the caller in the call backup (Hindi and English) |
 | **The phone itself** | Hearing "Bittu" and your words with Android's on-device recognizer, and speaking with the phone's own voice. Free, no key. |
 
-Today the tool-using assistant runs on Claude and live calls run on Gemini Live. The other text services answer
-questions. The backup chain for calls mixes whatever is available: hear with ElevenLabs, Fish Audio or AssemblyAI;
-think with Claude or Gemini; speak with ElevenLabs or Fish Audio.
+You choose which service the assistant thinks with, in **Brain and keys**. Whichever you pick gets the same tools,
+the same instructions and the same memory. We run it on Claude and have tested it on Gemini; the OpenAI-format path
+(OpenAI, OpenRouter, Kilo Code and others) is built the same way but we have not had a key to try it with yet. Live
+calls run on Gemini Live. The backup chain for calls mixes whatever is available: hear with ElevenLabs, Fish Audio
+or AssemblyAI; think with Claude or Gemini; speak with ElevenLabs or Fish Audio.
 
 You pay each service directly with your own key. Keys are kept in the app's private storage and are sent only to
 the service they belong to.

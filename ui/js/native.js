@@ -205,7 +205,7 @@ ${state.prompt.trim() ? '\nThe owner\'s standing instructions:\n' + state.prompt
 
 export const canTalkLive = () => !!N && !!state.keys.gemini;
 // Settings for conversations with the owner: Claude thinks, the phone (or ElevenLabs) speaks.
-const talkCfg = () => ({ prompt: ownerPrompt(), model: state.llm.provider === 'anthropic' && state.llm.model ? state.llm.model : 'claude-haiku-5-5', lang: LANG[state.langYou] || 'en-IN', tts: ['cloud', 'fish'].includes(state.tts) ? state.tts : 'phone', fishVoice: state.fishVoice || '', fishModel: state.fishModel || 's2.1-pro-free', elevenModel: state.elevenModel || 'eleven_flash_v2_5', elevenVoice: state.elevenVoice || '', announce: state.announce !== false });
+const talkCfg = () => ({ prompt: ownerPrompt(), provider: state.llm.provider || 'anthropic', url: state.llm.url || '', model: state.llm.model || (state.llm.provider === 'anthropic' ? 'claude-haiku-5-5' : ''), lang: LANG[state.langYou] || 'en-IN', tts: ['cloud', 'fish'].includes(state.tts) ? state.tts : 'phone', fishVoice: state.fishVoice || '', fishModel: state.fishModel || 's2.1-pro-free', elevenModel: state.elevenModel || 'eleven_flash_v2_5', elevenVoice: state.elevenVoice || '', announce: state.announce !== false });
 /** Tell the always-on assistant to listen now, to take a typed request, or to be quiet. */
 export const assist = (action, text = '') => N && N.assist(action, text);
 /** @param wake undefined for a normal start; a string (possibly empty) when the owner said "Bittu" followed by those words. */

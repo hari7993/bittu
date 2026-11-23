@@ -426,7 +426,7 @@ function brain() {
       <h1 class="h1">Bittu's brain</h1>
       <p class="lede">Use any AI service you already pay for. Keys are stored only on this phone.</p>
 
-      <div><div class="label"><span>Thinking: commands and messages</span></div>
+      <div><div class="label"><span>Thinking: when you talk to Bittu</span></div>
         <div class="chips">${PROVIDERS.map(([id, name]) => `<button class="chip ${state.llm.provider === id ? 'on' : ''}" data-act="provider" data-val="${id}" aria-pressed="${state.llm.provider === id}">${name}${state.keys[id] ? icon('check', 12, 3) : ''}</button>`).join('')}</div>
         <div class="card stack mt-sm">
           <label class="field"><span>${cur[1]} key ${state.keys[cur[0]] ? '· saved' : ''}</span><input class="input" type="password" data-bind-flag="keys.${cur[0]}" data-refresh placeholder="${state.keys[cur[0]] ? 'Paste a new key to replace it' : 'Paste your key'}" autocomplete="off"></label>
@@ -459,7 +459,7 @@ function brain() {
           <label class="field"><span>Voice</span>${picker('fish-voices', 'fishVoice', 'Leave empty for the default voice', 'voices')}</label>
           <label class="field"><span>Voice model</span><select class="input" data-bind="fishModel" data-refresh style="appearance:auto">${[['s2.1-pro-free', 'S2.1 Pro Free · no cost, fair-use limits'], ['s2.1-pro', 'S2.1 Pro · paid'], ['s3-pro', 'S3 Pro · paid'], ['drama-3', 'Drama 3 · paid']].map(([v, t]) => `<option value="${v}" ${(state.fishModel || 's2.1-pro-free') === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
           <p class="small muted">Needs internet. If it fails, Bittu tries ElevenLabs when that key is saved, then the phone's voice.</p></div>` : `<p class="small muted mt-sm" style="padding:0 4px">Free, instant and offline.</p>`}</div>
-      <div class="card hstack">${ico('info')}<p class="small muted grow">Bittu thinks with your Anthropic key when you talk to it. Gemini is used only on phone calls.</p></div>
+      <div class="card hstack">${ico('info')}<p class="small muted grow">Bittu thinks with the service chosen at the top of this page, and uses the phone through it. Phone calls use Gemini Live, with the backup below it.</p></div>
     </div>`,
   };
 }
