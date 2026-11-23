@@ -5,6 +5,7 @@ local.properties
 *.apk
 *.keystore
 *.jks
+keystore.properties
 
 # test tool output, logs and recordings: these can hold private data from the phone
 probe/out/
