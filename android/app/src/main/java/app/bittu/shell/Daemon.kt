@@ -240,7 +240,8 @@ object Calls {
             mode == "off" || mode == "normal" -> "ring"
             person?.optBoolean("through") == true -> "ring"
             mode == "strangers" && person != null -> "ring"
-            mode == "meeting" || cfg.optString("modeAct") == "decline" -> "decline"
+            // No built-in mode cuts a call: Bittu answers in all of them. Only a mode the owner made and set to "decline" does.
+            cfg.optString("modeAct") == "decline" -> "decline"
             else -> "answer"
         }
         Daemon.note("ringing: ${if (number.isEmpty()) "the phone gave no number" else if (person == null) "a number that is not saved" else if (family) "family in your contacts" else if (person.optBoolean("contact")) "one of your phone's contacts" else "a person in Bittu's list"}, mode $mode, action $action")
@@ -257,8 +258,11 @@ object Calls {
             return
         }
         if (cfg.optString("geminiKey").isEmpty() && Cascade.missing(cfg) != null) { Daemon.emit(JSONObject().put("ev", "call").put("state", "skipped").put("who", who).put("why", "No Gemini key and no backup keys are saved, so the call was left ringing.")); return }
+        // In a meeting or asleep the ringing itself is the problem: silence it at once and pick up after a short moment.
+        val hush = mode == "meeting" || mode == "sleep"
+        if (hush) Daemon.sh("input keyevent 25") // volume down while ringing silences the ringer; the call keeps coming in
         // Give the owner a chance to pick up first.
-        val wait = cfg.optInt("ringFirst", 10) * 1000L
+        val wait = (if (hush) minOf(cfg.optInt("ringFirst", 10), 3) else cfg.optInt("ringFirst", 10)) * 1000L
         val until = System.currentTimeMillis() + wait
         while (System.currentTimeMillis() < until) { if (Daemon.callState != 1) return; Thread.sleep(200) }
         // The call state is only checked once a second, so it can be a second old. If the owner picked up in that

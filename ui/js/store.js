@@ -58,7 +58,7 @@ const defaults = () => ({
     { id: 'ravi', name: 'Ravi', rel: 'Office', level: 1, through: false },
   ],
   notes: [
-    { id: 'n1', who: 'Amma', when: 'Today, 1:12 pm', mode: 'Meeting', tag: 'Handled', sum: 'Amma called during your meeting. Bittu declined and sent your meeting text.', lines: [['b', 'Declined the call and sent: "In a meeting right now. I will call you back soon."']] },
+    { id: 'n1', who: 'Amma', when: 'Today, 1:12 pm', mode: 'Meeting', tag: 'Handled', sum: 'Amma called during your meeting. Bittu answered, said you were in a meeting and took her message.', lines: [['b', 'Declined the call and sent: "In a meeting right now. I will call you back soon."']] },
     { id: 'n2', who: 'Unknown number', when: 'Yesterday, 6:40 pm', mode: 'Strangers', tag: 'Scam risk', sum: 'Caller said your bank card is blocked and asked for a code. Bittu shared nothing and ended the call.', lines: [['b', 'Hello, this is Bittu, an assistant answering this phone. Who is calling?'], ['t', 'Calling from your bank. Your card is blocked. Tell me the code you just got.'], ['b', 'I never share codes or bank details. Goodbye.']] },
   ],
   log: [
@@ -113,7 +113,7 @@ export function toast(text) {
 export const MODES = {
   normal: { name: 'Listening', word: 'is listening.', sub: 'Say "Hey Bittu" or tap the button. Calls ring as usual.', icon: 'mic' },
   driving: { name: 'Driving', word: 'is driving.', sub: 'Bittu answers calls and tells your people when you will arrive.', icon: 'car', hint: 'Answers for you' },
-  meeting: { name: 'Meeting', word: 'in a meeting.', sub: 'Calls are declined quietly and get your meeting text.', icon: 'cal', hint: 'Declines and texts' },
+  meeting: { name: 'Meeting', word: 'in a meeting.', sub: 'The ringer is silenced and Bittu answers for you, saying you are in a meeting.', icon: 'cal', hint: 'Answers quietly' },
   sleep: { name: 'Sleep', word: 'is asleep.', sub: 'The phone stays silent. Only people who ring through can wake you.', icon: 'moon', hint: 'Silent nights' },
   strangers: { name: 'Strangers', word: 'screens calls.', sub: 'Bittu answers numbers you have not saved and asks what they want.', icon: 'shield', hint: 'Unknown numbers' },
   off: { name: 'Off', word: 'is off.', sub: 'Bittu is not listening and will not touch the phone.', icon: 'power', hint: 'Everything stops' },

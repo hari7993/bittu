@@ -48,8 +48,8 @@ This is what Bittu is built around. You switch on a mode, and from then on:
 | Mode | What Bittu does with a call |
 |---|---|
 | **Driving** | Answers, says you are driving, takes a message |
-| **Meeting** | Declines quietly and sends your "in a meeting" text |
-| **Sleep** | Answers so the phone stays silent; people you marked can still ring through |
+| **Meeting** | Silences the ringer, answers, says you are in a meeting, takes a message |
+| **Sleep** | Silences the ringer and answers; people you marked can still ring through |
 | **Strangers** | Answers only numbers you have not saved and asks what they want |
 | **Your own modes** | You write the sentence, for example "playing cricket, back after 6", and choose answer or decline |
 | **Off** | Bittu does nothing; calls ring as usual |
@@ -166,7 +166,7 @@ advertising or analytics; there is none in the code.
 | Microphone (`RECORD_AUDIO`, `FOREGROUND_SERVICE_MICROPHONE`) | To hear "Bittu" and your request. Listening uses Android's on-device recognizer; the sound of the wake-word loop is not sent anywhere. |
 | Contacts (`READ_CONTACTS`) | To call or message a person by name, and to know who is calling. |
 | Phone (`READ_PHONE_STATE`, `CALL_PHONE`) | To notice a ringing call and to place calls you ask for. |
-| SMS (`SEND_SMS`) | To send the text you dictate, and the "I'm in a meeting" text when a mode declines a call. |
+| SMS (`SEND_SMS`) | To send the text you dictate, and your own text when a mode you made is set to decline calls. |
 | Location, including background (`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`) | For "where am I", weather, and to tell family where you are **when they ask and you allowed it**. Background access is needed because a call can arrive while the app is closed. |
 | Calendar (`READ_CALENDAR`) | To tell callers with full access what you have planned today and tomorrow, when they ask. Read-only. |
 | Notifications (`POST_NOTIFICATIONS`) | The "listening" notice Android requires, call summaries, and the take-over alert. |
