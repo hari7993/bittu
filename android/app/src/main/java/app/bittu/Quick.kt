@@ -14,6 +14,7 @@ object Quick {
             .replace(Regex("^(hey |hi |ok |okay )?(bittu|bitu|beetu)[, ]*"), "")
             .replace(Regex("^(please |can you |could you |will you |just )+"), "")
             .replace(Regex("( please| now| for me)+$"), "").trim()
+            .replace(Regex("what'?s ?app|whats ?up|wh?ats ?ap+"), "whatsapp") // however the recognizer spelled it
         if (t.isEmpty()) return null
         fun run(name: String, args: JSONObject) = Tools.run(c, name, args)
         fun quiet(result: String, okWords: String) = if (result.contains(okWords)) "" else result // success shows on screen; only problems are spoken
@@ -33,12 +34,14 @@ object Quick {
             val name = who.replace(Regex("( on (the )?(phone|mobile)| now)$"), "").trim()
             if (name.split(' ').size <= 4 && Tools.knows(c, name)) return run("call_person", JSONObject().put("name", name))
         }
-        // "send hi to amma on whatsapp", "send a hi message to amma on whatsapp", "whatsapp amma saying I'm late", "message amma that I'm late"
-        (Regex("^send (?:a |an )?(.+?)(?: message| msg| text)? to (.+?) (?:on|in|via|through) whatsapp$").find(t)?.let { it.groupValues[2] to it.groupValues[1] }
-            ?: Regex("^(?:send (?:a )?)?(?:whatsapp|whatsapp message|message|text|msg)(?: to)? (.+?) (?:saying|that|as|:) (.+)$").find(t)?.let { it.groupValues[1] to it.groupValues[2] }
-            ?: Regex("^(?:tell|inform) (.+?) (?:on whatsapp )?(?:that |saying )(.+)$").find(t)?.let { it.groupValues[1] to it.groupValues[2] })?.let { (who, words) ->
-            val name = who.replace(Regex("( on whatsapp| in whatsapp)$"), "").trim()
-            if (words.isNotBlank() && name.split(' ').size <= 4 && Tools.knows(c, name)) return quiet(run("send_message", JSONObject().put("app", "whatsapp").put("name", name).put("text", words.trim().replaceFirstChar { it.uppercase() })), "Sent to")
+        // "send hi to amma on whatsapp", "send a hi message to amma on office whatsapp", "whatsapp business amma saying I'm late", "message amma that I'm late"
+        val wa = "(?:my |the )?(?:office |business |work |personal |normal )?whatsapp(?: business| office| work| personal)?"
+        (Regex("^send (?:a |an )?(.+?)(?: message| msg| text)? to (.+?) (?:on|in|via|through|from) ($wa)$").find(t)?.let { Triple(it.groupValues[2], it.groupValues[1], it.groupValues[3]) }
+            ?: Regex("^(?:send (?:a )?)?($wa)(?: message)?(?: to)? (.+?) (?:saying|that|as|:) (.+)$").find(t)?.let { Triple(it.groupValues[2], it.groupValues[3], it.groupValues[1]) }
+            ?: Regex("^(?:send (?:a )?)?(?:message|text|msg)(?: to)? (.+?) (?:saying|that|as|:) (.+)$").find(t)?.let { Triple(it.groupValues[1], it.groupValues[2], "whatsapp") }
+            ?: Regex("^(?:tell|inform) (.+?) (?:on ($wa) )?(?:that |saying )(.+)$").find(t)?.let { Triple(it.groupValues[1], it.groupValues[3], it.groupValues[2].ifEmpty { "whatsapp" }) })?.let { (who, words, which) ->
+            val name = who.trim()
+            if (words.isNotBlank() && name.split(' ').size <= 4 && Tools.knows(c, name)) return quiet(run("send_message", JSONObject().put("app", which).put("name", name).put("text", words.trim().replaceFirstChar { it.uppercase() })), "Sent to")
         }
 
         // ---- places and videos: one link, no tapping ----

@@ -176,6 +176,12 @@ object Tools {
         return if (hits.isEmpty()) "" else " Close names in the contacts: ${hits.joinToString(", ")}."
     }
 
+    const val WA_PERSONAL = "com.whatsapp"
+    const val WA_BUSINESS = "com.whatsapp.w4b"
+    fun installed(c: Context, pkg: String) = runCatching { c.packageManager.getPackageInfo(pkg, 0); true }.getOrDefault(false)
+    /** "whatsapp business", "business whatsapp", "office whatsapp", "work whatsapp", "wa business" all mean the business app. */
+    fun isBusiness(said: String) = Regex("business|office|work|w4b|company|shop").containsMatchIn(said.lowercase())
+
     /** True when the name reaches someone in the family list, Bittu's people or the contacts. */
     fun knows(c: Context, name: String): Boolean = person(c, name) != null
 
@@ -206,13 +212,18 @@ object Tools {
             return "The text to ${p.first} was handed to the phone for sending."
         }
         if (!ready()) return NO_HELPER
+        // The owner may have two WhatsApps: the ordinary one for personal chats and WhatsApp Business for the office.
+        val business = isBusiness(app)
+        val pkg = if (business) WA_BUSINESS else WA_PERSONAL
+        val label = if (business) "WhatsApp Business" else "WhatsApp"
+        if (!installed(c, pkg)) return "$label is not installed on this phone." + if (installed(c, if (business) WA_PERSONAL else WA_BUSINESS)) " The other WhatsApp is; say which one to use." else ""
         val d = p.second.filter { it.isDigit() }.let { if (it.length == 10) "91$it" else it }
-        sh("am start -a android.intent.action.VIEW -d 'https://wa.me/$d?text=${URLEncoder.encode(text, "UTF-8").replace("+", "%20").replace("'", "%27")}'")
-        val screen = ScreenControl.instance ?: return "WhatsApp is open on ${p.first}'s chat with the message typed, but screen control is off, so the owner has to tap send."
-        if (!screen.tap("Send", 8000)) return "WhatsApp is open on ${p.first}'s chat with the message typed, but the send button was not found. The owner has to tap send."
+        sh("am start -a android.intent.action.VIEW -d 'https://wa.me/$d?text=${URLEncoder.encode(text, "UTF-8").replace("+", "%20").replace("'", "%27")}' -p $pkg")
+        val screen = ScreenControl.instance ?: return "$label is open on ${p.first}'s chat with the message typed, but screen control is off, so the owner has to tap send."
+        if (!screen.tap("Send", 8000)) return "$label is open on ${p.first}'s chat with the message typed, but the send button was not found. The owner has to tap send."
         Thread.sleep(700)
-        did("msg", "Sent a WhatsApp message to ${p.first}")
-        return "Sent to ${p.first} on WhatsApp."
+        did("msg", "Sent a $label message to ${p.first}")
+        return "Sent to ${p.first} on $label."
     }
 
     /** "package/activity|Label" for the app people call by this name, or "". */
@@ -257,9 +268,14 @@ object Tools {
      * (speech recognizers spell app names loosely). Returns "package/activity|label", or "" when nothing is close.
      */
     fun findApp(c: Context, name: String): String {
-        val want = name.trim().lowercase().removePrefix("the ").removePrefix("my ").removeSuffix(" app").removeSuffix(" application").trim()
+        // Recognizers write WhatsApp in many ways: "whats app", "what's app", "whats up", "watsapp".
+        val want = name.trim().lowercase().replace(Regex("what'?s ?app|whats ?up|wh?ats ?ap+"), "whatsapp").removePrefix("the ").removePrefix("my ").removeSuffix(" app").removeSuffix(" application").trim()
         if (want.isEmpty()) return ""
         val list = apps(c)
+        if (want.contains("whatsapp") || Regex("(^| )wa( |$)").containsMatchIn(want)) {
+            val pkg = if (isBusiness(want)) WA_BUSINESS else WA_PERSONAL
+            list.firstOrNull { it.second == pkg }?.let { return "${it.second}/${it.third}|${it.first}" }
+        }
         fun pick(w: String): Triple<String, String, String>? = list.firstOrNull { squash(it.first) == w }
             ?: list.filter { squash(it.first).startsWith(w) }.minByOrNull { it.first.length }
             ?: list.filter { w.length >= 3 && squash(it.first).contains(w) }.minByOrNull { it.first.length }
