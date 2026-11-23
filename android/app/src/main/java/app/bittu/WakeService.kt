@@ -36,6 +36,19 @@ class WakeService : Service() {
     private var engine: SpeechRecognizer? = null       // the one recognizer, reused for every listen
     private var engineOnDevice = false
     private var session = 0
+    private var busyInARow = 0
+    private var lastUnclog = 0L
+
+    /** Throws the stuck recognizer away and, at most once every two minutes, has the helper restart the phone's recognizer service. */
+    private fun unclog() {
+        session++; recognizer = null
+        runCatching { engine?.destroy() }; engine = null
+        val now = System.currentTimeMillis()
+        val clear = ShellLink.connected && now - lastUnclog > 120_000
+        if (clear) { lastUnclog = now; ShellLink.request("sh", JSONObject().put("cmd", "am force-stop $RECOGNIZER")) }
+        android.util.Log.i("BittuWake", "recognizer was stuck busy: made a new one" + if (clear) " and restarted the phone's recognizer service" else "")
+        main.postDelayed({ listen() }, if (clear) 3500 else 6000)
+    }
     private val main = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
     private val speaker by lazy { Speaker(this) }
@@ -156,6 +169,12 @@ class WakeService : Service() {
             override fun onError(code: Int) {
                 if (mine != session) return
                 android.util.Log.i("BittuWake", "recognizer error $code")
+                // "Busy" again and again means the phone's recognizer is clogged with old sessions (left behind when Bittu was
+                // updated or stopped) and is ignoring every request. Bittu then clears the recognizer and starts over, instead
+                // of staying deaf until someone notices.
+                if (code == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) {
+                    if (++busyInARow >= 3) { busyInARow = 0; unclog(); return }
+                } else busyInARow = 0
                 if ((code == 12 || code == 13 || code == 5) && onDevice && errors++ > 2) onDevice = false // the on-device recognizer is not usable here
                 if (code == 12 || code == 13) englishOnly = true // this language is not on the phone: fall back to English
                 finished(heard, if (code == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || code == SpeechRecognizer.ERROR_CLIENT) 1500 else 300)
