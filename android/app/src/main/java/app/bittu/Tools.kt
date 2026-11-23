@@ -107,23 +107,76 @@ object Tools {
     }
 
     /** A saved person first, then the phone's contacts. Returns name and number, or null. */
+    /** A name as people say it: lower case, no emoji or dots, no "garu" or "ji", no "my". */
+    private fun plain(name: String): String = name.lowercase().map { if (it.isLetterOrDigit() || it == ' ') it else ' ' }.joinToString("")
+        .split(' ').filter { it.isNotBlank() && it !in setOf("garu", "gaaru", "garoo", "ji", "sir", "madam", "mam", "my", "the", "to") }.joinToString(" ")
+
+    /** Other words people use for the same person, tried when the first word finds nobody. */
+    private val alsoCalled = mapOf("mom" to "amma", "mother" to "amma", "mummy" to "amma", "mum" to "amma", "dad" to "nanna", "father" to "nanna", "daddy" to "nanna", "sister" to "akka", "brother" to "anna")
+
+    /**
+     * Finds who the owner means. Looked up in this order: the family list, Bittu's own people, then the phone's contacts.
+     * Contact names are compared the way they sound, so "Amma" finds a contact saved as "Amma" with a heart after it,
+     * and "Amma garu" finds the same person.
+     */
     private fun person(c: Context, name: String): Pair<String, String>? {
-        val q = name.trim().lowercase()
-        if (q.isEmpty()) return null
-        val people = JSONObject(prefs(c).getString("config", "{}") ?: "{}").optJSONArray("people")
+        val first = plain(name)
+        if (first.isEmpty()) return null
+        // "Mom" means the owner's own mother first (saved as Amma), and only then any contact with "mom" in the name.
+        for (q in listOfNotNull(alsoCalled[first], first).distinct()) find(c, q)?.let { return it }
+        return null
+    }
+
+    private fun find(c: Context, q: String): Pair<String, String>? {
+        val cfg = JSONObject(prefs(c).getString("config", "{}") ?: "{}")
+        // The family list: "Amma 9000000001, Bava 9000000002"
+        for (part in cfg.optString("familyNumbers").split(',', ';')) {
+            val label = plain(part.filter { it.isLetter() || it == ' ' }); val number = part.filter { it.isDigit() || it == '+' }
+            if (label == q && number.length >= 7) return part.filter { it.isLetter() || it == ' ' }.trim() to number
+        }
+        val people = cfg.optJSONArray("people")
         if (people != null) for (pass in 0..1) for (i in 0 until people.length()) {
-            val p = people.getJSONObject(i); val n = p.optString("name").lowercase()
+            val p = people.getJSONObject(i); val n = plain(p.optString("name"))
             if (p.optString("number").isNotEmpty() && (if (pass == 0) n == q else n.contains(q))) return p.optString("name") to p.optString("number")
         }
         if (c.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) return null
-        val found = ArrayList<Pair<String, String>>()
-        c.contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER),
-            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " LIKE ?", arrayOf("%$q%"), null)?.use { while (it.moveToNext() && found.size < 40) found.add((it.getString(0) ?: "") to (it.getString(1) ?: "")) }
-        return found.firstOrNull { it.first.lowercase() == q } ?: found.firstOrNull { it.first.lowercase().startsWith(q) } ?: found.minByOrNull { it.first.length }
+        val words = q.split(' ')
+        var best: Pair<String, String>? = null; var bestScore = 0
+        c.contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER), null, null, null)?.use {
+            while (it.moveToNext()) {
+                val shown = it.getString(0) ?: continue; val number = it.getString(1) ?: continue
+                val n = plain(shown); if (n.isEmpty()) continue
+                val nameWords = n.split(' ')
+                // An exact name beats a name that starts with it, which beats one that only contains the words. Shorter names win ties.
+                val score = when {
+                    n == q -> 1000
+                    n.startsWith("$q ") -> 800
+                    words.all { w -> w in nameWords } -> 700
+                    nameWords.any { w -> w == q } -> 600
+                    n.contains(q) -> 400
+                    else -> 0
+                } - minOf(n.length, 99)
+                if (score > 300 && score > bestScore) { bestScore = score; best = shown to number }
+            }
+        }
+        return best
     }
 
+    /** Names that sound close, so Bittu can ask "did you mean ..." instead of only saying no. */
+    private fun nearby(c: Context, name: String): String {
+        val q = plain(name); if (q.length < 2 || c.checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) return ""
+        val hits = LinkedHashSet<String>()
+        c.contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME), null, null, null)?.use {
+            while (it.moveToNext() && hits.size < 5) { val shown = it.getString(0) ?: continue; val n = plain(shown); if (n.isNotEmpty() && (n.take(3) == q.take(3) || q.split(' ').any { w -> w.length > 2 && n.contains(w) })) hits.add(n) }
+        }
+        return if (hits.isEmpty()) "" else " Close names in the contacts: ${hits.joinToString(", ")}."
+    }
+
+    /** For checking the lookup without calling or sending anything: the name found and the number's last two digits. */
+    fun who(c: Context, name: String): String = person(c, name)?.let { it.first + " (number ends in " + it.second.filter(Char::isDigit).takeLast(2) + ")" } ?: ("nobody." + nearby(c, name))
+
     private fun call(c: Context, name: String): String {
-        val p = person(c, name) ?: return "Nobody called $name is in the contacts."
+        val p = person(c, name) ?: return "Nobody called $name is in the contacts." + nearby(c, name)
         if (!ready()) return NO_HELPER
         sh("am start -a android.intent.action.CALL -d tel:${p.second.filter { it.isDigit() || it == '+' }}")
         Thread.sleep(1500)
@@ -133,7 +186,7 @@ object Tools {
     }
 
     private fun message(c: Context, app: String, name: String, text: String): String {
-        val p = person(c, name) ?: return "Nobody called $name is in the contacts."
+        val p = person(c, name) ?: return "Nobody called $name is in the contacts." + nearby(c, name)
         if (text.isBlank()) return "There is no message text. Ask the owner what to say."
         if (app.lowercase() == "sms") {
             if (c.checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) return "Bittu is not allowed to send texts yet. The owner must allow SMS in the app."

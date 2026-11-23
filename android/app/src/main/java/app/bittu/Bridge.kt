@@ -212,6 +212,10 @@ class Bridge(private val activity: Activity, private val send: (String, String) 
     @JavascriptInterface
     fun memoryForget(what: String) { Thread { Memory.forget(activity.applicationContext, what) }.start() }
 
+    /** Test builds only: who a spoken name would reach. Nothing is called or sent. */
+    @JavascriptInterface
+    fun testWho(name: String): String = if (testBuild) Tools.who(activity.applicationContext, name) else ""
+
     /** Test builds only: tries the fast path on a sentence. Returns its answer and how long it took, or says the AI would be needed. */
     @JavascriptInterface
     fun testQuick(text: String): String { if (!testBuild) return ""; val t0 = System.currentTimeMillis(); val r = Quick.tryHandle(activity.applicationContext, text); return if (r == null) "NEEDS-AI" else "${System.currentTimeMillis() - t0} ms | ${r.ifEmpty { "(done, nothing said)" }}" }
