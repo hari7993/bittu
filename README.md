@@ -39,7 +39,8 @@ This is what Bittu is built around. You switch on a mode, and from then on:
 
 1. **It lets the phone ring for you first**, for as long as you set. If you pick up, Bittu stays out.
 2. **It answers and talks**, in a natural voice, live. It knows who is calling from your contacts and greets them
-   by name, in Telugu for people you have saved and in English for others, then follows the caller's language.
+   by name, in Telugu for people you have saved and in English for others. It then keeps one language for the whole
+   call: Telugu for a Telugu speaker, English for everyone else.
 3. **It tells each caller only what you allow.** A stranger hears that you can't take the call. Family can ask
    where you are and when you will be free.
 4. **It takes the message**, and if it is urgent it buzzes your phone so you can take the call over.
@@ -73,8 +74,8 @@ All of this happens on your own phone, on your own number. There is no call forw
 
 **Answering calls**
 - In a mode such as Driving, Bittu rings us first, then picks up and talks to the caller live.
-- It knows the caller from our contacts, greets saved contacts in Telugu and others in English, then follows the
-  caller's language.
+- It knows the caller from our contacts, greets saved contacts in Telugu and others in English, then keeps one
+  language for the whole call: Telugu for a Telugu speaker, English for everyone else.
 - It takes a message, can buzz our phone so we take the call over, and leaves a summary notification afterwards.
 - If the live voice service cannot be reached, it carries on with a three-step backup: hear, think, speak.
 
